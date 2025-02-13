@@ -57,15 +57,26 @@ const Cart: React.FC = () => {
         <header className="w-full p-4 text-center">
           <h1 className="text-3xl font-[500]">Giỏ hàng</h1>
         </header>
+        <div className="w-[8%] ml-auto mt-6 pb-6 ">
+          <button
+            className="w-full bg-[rgba(255,96,121,0.7)] text-white font-bold py-3 rounded-lg hover:bg-[rgba(255,96,121,0.9)] transition-colors duration-300"
+          >
+            Chọn tất cả
+          </button>
+        </div>
         {/* Danh mục giỏ hàng */}
         <div
           className="overflow-x-auto overflow-y-scroll border p-6 border-gray-200 rounded-lg shadow inline-scrollbar"
-          style={{ maxHeight: "500px" }}
+          style={{ maxHeight: "650px" }}
         >
           <div className="grid grid-flow grid-rows-1 gap-1">
             <div className="group relative w-full p-6 bg-white border border-gray-200 rounded-lg shadow flex items-center border-b justify-between transition-colors overflow-hidden">
               {/* Cột trái: Thông tin sản phẩm */}
               <div className="flex items-center space-x-4">
+                <input
+                  type="checkbox"
+                  className="mr-2 w-5 h-5 cursor-pointer"
+                />
                 {/* Ảnh sản phẩm */}
                 <img
                   src="https://s3-alpha-sig.figma.com/img/b42e/d042/90c7242704c7a44daa1256b01285b8d1?Expires=1740355200&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=nXaOP4uBB124rwraCk4u0rTxtol7r6ZGjejZc39XocgTdmZJcXtkXIi5dbzW60H1UayVV~EyFgavdmVoirHVN8WNisbkOOdWauqvEHI49WnvdeLktZrsA69ko4ITu5ywzuhoZXCIGHPBJgxO59H8ZxEKR~30Xt9eYVzc-UsQBR-ONUOT8RFAoOlSGok1WEiznaK3hbccqgHpG8XCZ-1Azv7gj~8l-jEUW8krqImxaYrBX9GBdm4TtYhQE-BXriXHevyCJ~lYA0890yLgPgCUDbzHjkPXhhB54nEyZBP5RbFjoJl2BptIt3eRd3WcZOQHzKP2ELf2WsTdE9wmEh5pdQ__"
@@ -360,6 +371,7 @@ const Cart: React.FC = () => {
             </div>
           </div>
         </div>
+
         {/* Phân trang */}
         <div className="flex justify-center mt-6">
           <Pagination
@@ -368,6 +380,38 @@ const Cart: React.FC = () => {
             pageSize={itemsPerPage}
             onChange={(page) => setCurrentPage(page)}
           />
+        </div>
+        <div className="w-[60%] ml-auto mt-6 p-6 bg-white border border-gray-200 rounded-lg shadow">
+          {/* Mã giảm giá */}
+          <div className="flex items-center mb-6">
+            <img
+              src="https://s3-alpha-sig.figma.com/img/e1bd/45d9/cb6fa9f62566eade09560369b67ddc0b?Expires=1740355200&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=c4ylfaipA60VFhpSyoPPehAv~fo~y~uV8t9axZCqzL5doiNhxnmwsEeNMkUrn2CRVTqTdETJ1nZHrBzJqsTT-8EcB5-ZLeonmYA7Vr7rBnyz2oD~rwBciJCm6CvQq7F~4~lgCqDxj5wsXtl1OTCf2RgQdyITPTPn4NcyzsuIwcTiAo3dDCSOicGIyq10jyICOKlCpIdpgOcIfP~Tp0Yy2bBxkC3-LYyGcm9PWBnxSUpU8AXVaEZXa6c2rp9EvJRJn6CnulCiyXnNWfV9xdECHp3t9T1u~FVvghOVWZGzpW2T~qqr8FrNsCmzcfr94XKd6rrQe7s4HqWl2e0ukmjO4g__"
+              alt="Discount Icon"
+              className="w-6 h-6 mr-2"
+            />
+            <input
+              type="text"
+              placeholder="Mã giảm giá"
+              className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[rgba(255,96,121,0.7)]"
+            />
+          </div>
+          <div className="flex justify-between items-center mb-4">
+            <span className="font-semibold text-lg">Số lượng(3)</span>
+            <span className="font-semibold text-lg">1,048,000 VND</span>
+          </div>
+          <div className="flex justify-between items-center mb-4">
+            <span className="font-semibold text-lg">Giảm giá</span>
+            <span className="font-semibold text-lg">100,000 VND</span>
+          </div>
+          <div className="flex justify-between items-center mb-6">
+            <span className="font-semibold text-lg">Tổng tiền</span>
+            <span className="font-semibold text-lg" style={{ color: "rgba(255, 96, 121, 0.7)" }}>948,000 VND</span>
+          </div>
+          <button
+            className="w-full bg-[rgba(255,96,121,0.7)] text-white font-bold py-3 rounded-lg hover:bg-[rgba(255,96,121,0.9)] transition-colors duration-300"
+          >
+            THANH TOÁN
+          </button>
         </div>
       </div>
     </MainLayout>
