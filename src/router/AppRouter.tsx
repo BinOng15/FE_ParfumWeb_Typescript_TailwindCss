@@ -6,6 +6,8 @@ import AdminDashboard from "../pages/admin/AdminDashboard";
 import PerfumeProduct from "../pages/customer/PerfumeProduct";
 import PerfumeProductDetail from "../pages/customer/PerfumeProductDetail";
 import Cart from "../pages/customer/Cart";
+import ProfileEdit from "../pages/customer/Profile";
+import OrderHistory from "../pages/customer/OrderHistory";
 
 const AppRoutes: React.FC = () => {
   return (
@@ -18,6 +20,8 @@ const AppRoutes: React.FC = () => {
         element={<PerfumeProductDetail />}
       />
       <Route path="/cart" element={<Cart />} />
+      <Route path="/profiles" element={<ProfileEdit />} />
+      <Route path="/oderhistory" element={<OrderHistory />} />
       {/* Staff Pages */}
       <Route path="/staff" element={<StaffDashboard />} />
 
