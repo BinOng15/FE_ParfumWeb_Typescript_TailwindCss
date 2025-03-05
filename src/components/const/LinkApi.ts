@@ -1,0 +1,1 @@
+export const APILink = "https://localhost:7171/api";
