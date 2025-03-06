@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useParams } from "react-router-dom";
 import Home from "../pages/customer/Home";
 import StaffDashboard from "../pages/staff/StaffDashboard";
 import AdminDashboard from "../pages/admin/AdminDashboard";
@@ -11,6 +11,12 @@ import OrderHistory from "../pages/customer/OrderHistory";
 import PaymentHistory from "../pages/customer/PaymentHistory";
 
 const AppRoutes: React.FC = () => {
+  const PerfumeProductDetailWrapper: React.FC = () => {
+    const { id } = useParams<{ id: string }>(); // Lấy id từ URL params
+    const productId = id ? parseInt(id, 10) : 0; // Chuyển id sang number, mặc định là 0 nếu không có id
+
+    return <PerfumeProductDetail productId={productId} />;
+  };
   return (
     <Routes>
       {/* Customer Pages */}
@@ -18,7 +24,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/perfumeProduct" element={<PerfumeProduct />} />
       <Route
         path="/perfumeProductDetail/:id"
-        element={<PerfumeProductDetail />}
+        element={<PerfumeProductDetailWrapper />}
       />
       <Route path="/cart" element={<Cart />} />
       <Route path="/profiles" element={<ProfileEdit />} />

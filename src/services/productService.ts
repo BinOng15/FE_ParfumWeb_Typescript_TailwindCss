@@ -34,7 +34,7 @@ const productService = {
   ): Promise<DynamicResponse<ProductResponse>> => {
     try {
       const response: AxiosResponse<DynamicResponse<ProductResponse>> =
-        await axiosInstance.post("/product/getallproduct", data);
+        await axiosInstance.post("product/getallproduct", data);
       return response.data;
     } catch (error) {
       console.error("Error fetching all products:", error);

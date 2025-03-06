@@ -8,16 +8,16 @@ export interface BaseResponse<T = any> {
 }
 
 export interface ProductResponse {
-  ProductId: number;
-  Name: string;
-  Brand: string;
-  Price: number;
-  Stock: number;
-  Description: string;
-  ImageUrl: string;
-  CreatedAt: Date;
-  UpdatedAt: Date;
-  IsDeleted: boolean;
+  productId: number;
+  name: string;
+  brand: string;
+  price: number;
+  stock: number;
+  description: string;
+  imageUrl: string;
+  createdAt: Date;
+  updatedAt: Date;
+  isDeleted: boolean;
 }
 
 export interface CreateProductRequest {

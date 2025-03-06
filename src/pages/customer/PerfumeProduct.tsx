@@ -1,14 +1,35 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Breadcrumb, Input, Pagination, Select } from "antd";
 import {
   SearchOutlined,
   HeartOutlined,
   ShoppingCartOutlined,
-  StarFilled,
-  StarOutlined,
+
 } from "@ant-design/icons";
 import MainLayout from "../../layout/MainLayout";
+import { axiosInstance } from "../../services/axiosInstance";
 import { useNavigate } from "react-router-dom";
+
+export interface GetAllProductRequest {
+  pageNum: number;
+  pageSize: number;
+  keyWord?: string;
+  Status?: boolean;
+}
+
+export interface ProductResponse {
+  productId: number;
+  name: string;
+  brand: string;
+  price: number;
+  stock: number;
+  description: string;
+  imageUrl: string;
+  createdAt: Date;
+  updatedAt: Date;
+  isDeleted: boolean;
+}
+
 
 const categories = [
   {
@@ -32,19 +53,6 @@ const categories = [
 const filters = ["Tất cả", "Bán chạy", "Giảm giá", "Giá thấp", "Giá cao"];
 
 // Fake danh sách sản phẩm
-const fakeProducts = Array(100)
-  .fill(null)
-  .map((_, index) => ({
-    id: index + 1,
-    name: `Nước hoa ${index + 1}`,
-    description: "Hương thơm sang trọng, lưu hương lâu.",
-    img: "https://insacmau.com/wp-content/uploads/2023/08/hop-dung-nuoc-hoa-chiet-9-1200x900.jpg",
-    price: `${((index % 5) + 1) * 500}.000 VNĐ`,
-    oldPrice: index % 3 === 0 ? `${((index % 5) + 1) * 600}.000 VNĐ` : null, // Random giá cũ
-    rating: Math.floor(Math.random() * 5) + 1, // Random từ 1-5 sao
-    discount: index % 2 === 0 ? "-15%" : "-10%", // Random giảm giá
-    size: ["30ML", "50ML", "100ML"],
-  }));
 
 const fragranceGroups = [
   {
@@ -84,17 +92,45 @@ const fragranceGroups = [
 
 const PerfumeProduct: React.FC = () => {
   const [selectedFilter, setSelectedFilter] = useState("Tất cả");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
-  const navigate = useNavigate(); // Hook để điều hướng trang
-
+  const [products, setProducts] = useState<ProductResponse[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [currentPage,] = useState(1);
+  const [, setTotalItems] = useState(0);
+  const navigate = useNavigate();
   // Lấy danh sách sản phẩm hiển thị theo trang
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const displayedProducts = fakeProducts.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  );
+  const getAllProducts = async (pageNum: number) => {
+    try {
+      setLoading(true);
+      const requestData: GetAllProductRequest = {
+        pageNum,
+        pageSize: 10,
+        keyWord: "",
+        Status: true,
+      };
 
+      const response = await axiosInstance.post("product/getallproduct", requestData);
+
+      // Lấy danh sách sản phẩm từ API
+      const productList = response.data.data.pageData;
+
+      // Cập nhật state với danh sách sản phẩm
+      setProducts(productList);
+
+      // Cập nhật tổng số sản phẩm để phân trang
+      setTotalItems(response.data.data.pageInfo.totalItem);
+    } catch (error) {
+      console.error("Lỗi khi tải sản phẩm:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getAllProducts(currentPage);
+  }, [currentPage]);
+  const handleProductClick = (productId: number) => {
+    navigate(`/perfumeProductDetail/${productId}`); // Điều hướng đến trang chi tiết
+  };
   return (
     <MainLayout>
       <div className="p-6 bg-white">
@@ -145,11 +181,10 @@ const PerfumeProduct: React.FC = () => {
             {filters.map((filter, index) => (
               <button
                 key={index}
-                className={`px-4 py-2 rounded-full text-sm font-semibold ${
-                  selectedFilter === filter
-                    ? "bg-black text-white"
-                    : "bg-white text-gray-700"
-                }`}
+                className={`px-4 py-2 rounded-full text-sm font-semibold ${selectedFilter === filter
+                  ? "bg-black text-white"
+                  : "bg-white text-gray-700"
+                  }`}
                 onClick={() => setSelectedFilter(filter)}
               >
                 {filter}
@@ -166,101 +201,61 @@ const PerfumeProduct: React.FC = () => {
 
         {/* Danh sách sản phẩm */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mt-6">
-          {displayedProducts.map((product) => (
-            <div
-              key={product.id}
-              className="relative bg-white shadow-md rounded-lg overflow-hidden border border-gray-200"
-              onClick={() => navigate(`/perfumeProductDetail/${product.id}`)} // Click để chuyển trang
-            >
-              {/* Ảnh sản phẩm */}
-              <div className="relative">
-                <img
-                  src={product.img}
-                  alt={product.name}
-                  className="w-full h-[250px] object-cover"
-                />
+          {loading ? (
+            <p>Đang tải sản phẩm...</p>
+          ) : products.length > 0 ? (
+            products.map((product) => (
+              <div
+                key={product.productId}
+                className="relative bg-white shadow-md rounded-lg overflow-hidden border border-gray-200"
+              >
+                {/* Ảnh sản phẩm */}
+                <div className="relative">
+                  <img
+                    src={product.imageUrl}
+                    alt={product.name}
+                    className="w-full h-[250px] object-cover"
+                    onClick={() => handleProductClick(product.productId)}
+                  />
 
-                {/* Overlay mờ chứa tên sản phẩm */}
-                <div className="absolute bottom-0 w-full bg-black bg-opacity-30 text-white p-3">
-                  <h3 className="text-sm font-bold">{product.name}</h3>
+                  {/* Overlay mờ chứa tên sản phẩm */}
+                  <div className="absolute bottom-0 w-full bg-black bg-opacity-30 text-white p-3">
+                    <h3 className="text-sm font-bold">{product.name}</h3>
+                  </div>
                 </div>
 
-                {/* Nhãn giảm giá */}
-                <span className="absolute top-2 left-2 bg-red-100 text-red-500 text-xs font-bold px-2 py-1 rounded">
-                  {product.discount}
-                </span>
-              </div>
+                {/* Thông tin sản phẩm */}
+                <div className="p-3">
+                  <p className="text-xs text-gray-500 truncate">{product.description}</p>
 
-              {/* Thông tin sản phẩm */}
-              <div className="p-3">
-                <p className="text-xs text-gray-500 truncate">
-                  {product.description}
-                </p>
-
-                {/* Dung tích */}
-                <div className="flex gap-2 mt-1">
-                  {product.size.map((size, i) => (
-                    <span
-                      key={i}
-                      className="border text-xs px-2 py-1 rounded text-gray-700"
-                    >
-                      {size}
+                  {/* Giá sản phẩm */}
+                  <div className="mt-2">
+                    <span className="text-red-600 font-bold text-md">
+                      {product.price.toLocaleString()}₫
                     </span>
-                  ))}
+                  </div>
                 </div>
 
-                {/* Giá sản phẩm */}
-                <div className="mt-2">
-                  {product.oldPrice && (
-                    <span className="text-xs text-gray-400 line-through">
-                      {product.oldPrice}
-                    </span>
-                  )}
-                  <span className="text-red-600 font-bold text-md ml-2">
-                    {product.price}
-                  </span>
-                </div>
-
-                {/* Đánh giá sao */}
-                <div className="flex space-x-1 mt-1">
-                  {Array(5)
-                    .fill(null)
-                    .map((_, i) =>
-                      i < product.rating ? (
-                        <StarFilled
-                          key={i}
-                          className="text-yellow-400 text-sm"
-                        />
-                      ) : (
-                        <StarOutlined
-                          key={i}
-                          className="text-gray-300 text-sm"
-                        />
-                      )
-                    )}
+                {/* Nút yêu thích & giỏ hàng */}
+                <div className="absolute bottom-3 right-3 flex space-x-2">
+                  <button className="bg-gray-200 p-2 rounded-full text-gray-600 hover:text-red-500 hover:bg-gray-300 transition">
+                    <HeartOutlined className="text-xl" />
+                  </button>
+                  <button className="bg-gray-200 p-2 rounded-full text-gray-600 hover:text-blue-500 hover:bg-gray-300 transition">
+                    <ShoppingCartOutlined className="text-xl" />
+                  </button>
                 </div>
               </div>
-
-              {/* Nút yêu thích & giỏ hàng */}
-              <div className="absolute bottom-3 right-3 flex space-x-2">
-                <button className="bg-gray-200 p-2 rounded-full text-gray-600 hover:text-red-500 hover:bg-gray-300 transition">
-                  <HeartOutlined className="text-xl" />
-                </button>
-                <button className="bg-gray-200 p-2 rounded-full text-gray-600 hover:text-blue-500 hover:bg-gray-300 transition">
-                  <ShoppingCartOutlined className="text-xl" />
-                </button>
-              </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <p>Không có sản phẩm nào!</p>
+          )}
         </div>
 
         {/* Phân trang */}
         <div className="flex justify-center mt-6">
           <Pagination
-            current={currentPage}
-            total={fakeProducts.length}
-            pageSize={itemsPerPage}
-            onChange={(page) => setCurrentPage(page)}
+
           />
         </div>
         {/* --- Nhóm Hương Phổ Biến --- */}
@@ -307,6 +302,7 @@ const PerfumeProduct: React.FC = () => {
                         src={group.img}
                         alt={group.englishName}
                         className="w-36 h-16 object-cover rounded-md"
+
                       />
                     </td>
                     <td className="border border-gray-300 px-4 py-2 font-semibold">
