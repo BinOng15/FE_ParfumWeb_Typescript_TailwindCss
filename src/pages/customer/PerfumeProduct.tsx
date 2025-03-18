@@ -9,6 +9,8 @@ import {
 import MainLayout from "../../layout/MainLayout";
 import { axiosInstance } from "../../services/axiosInstance";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { addToCart } from "../../redux/cartSlice";
 
 export interface GetAllProductRequest {
   pageNum: number;
@@ -97,6 +99,7 @@ const PerfumeProduct: React.FC = () => {
   const [currentPage,] = useState(1);
   const [, setTotalItems] = useState(0);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   // Lấy danh sách sản phẩm hiển thị theo trang
   const getAllProducts = async (pageNum: number) => {
     try {
@@ -241,7 +244,10 @@ const PerfumeProduct: React.FC = () => {
                   <button className="bg-gray-200 p-2 rounded-full text-gray-600 hover:text-red-500 hover:bg-gray-300 transition">
                     <HeartOutlined className="text-xl" />
                   </button>
-                  <button className="bg-gray-200 p-2 rounded-full text-gray-600 hover:text-blue-500 hover:bg-gray-300 transition">
+                  <button className="bg-gray-200 p-2 rounded-full text-gray-600 hover:text-blue-500 hover:bg-gray-300 transition"
+                    onClick={() => {
+                      dispatch(addToCart(product))
+                    }}>
                     <ShoppingCartOutlined className="text-xl" />
                   </button>
                 </div>
