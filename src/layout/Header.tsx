@@ -14,6 +14,7 @@ const CustomHeader: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, } = useSelector((state: any) => state.auth); // Lấy trạng thái từ Redux
+  const { products } = useSelector((state: any) => state.cart);
   const dispatch = useDispatch();
 
   const showLoginModal = () => {
@@ -70,7 +71,7 @@ const CustomHeader: React.FC = () => {
             <HeartOutlined className="text-lg cursor-pointer" />
           </Badge>
           <Badge
-            count={9}
+            count={products.length}
             offset={[0, 0]}
             color="red"
             onClick={() => navigate(`/cart`)}
