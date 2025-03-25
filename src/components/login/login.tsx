@@ -25,17 +25,15 @@ const LoginModal: React.FC<LoginModalProps> = ({
   const handleLogin = async () => {
     try {
       const token = await authService.userLogin(email, password);
-
-      sessionStorage.setItem("token", token);
-
+      const user = await authService.getCurrentUser(token);
       const userData = {
-        id: "userIdFromResponse", // Thay bằng dữ liệu thực tế từ API nếu có
-        email: email,
-        role: "user", // Thay bằng role từ API nếu có
+        customerId: user.id,
+        email: user.email,
+        roleName: user.role,
       };
-
+      // Lưu token vào sessionStorage
+      sessionStorage.setItem("token", token);
       dispatch(login(userData));
-
       onLogin();
       onClose();
       message.success("Đăng nhập thành công!");
@@ -44,7 +42,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
       message.error("Đăng nhập thất bại. Vui lòng kiểm tra lại email hoặc mật khẩu!");
     }
   };
-
   return (
     <Modal
       title={null}

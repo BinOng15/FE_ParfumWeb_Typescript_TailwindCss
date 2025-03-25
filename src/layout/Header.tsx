@@ -13,7 +13,7 @@ const CustomHeader: React.FC = () => {
   const [isSignupModalVisible, setIsSignupModalVisible] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, } = useSelector((state: any) => state.auth); // Lấy trạng thái từ Redux
+  const { isAuthenticated, } = useSelector((state: any) => state.auth);
   const dispatch = useDispatch();
 
   const showLoginModal = () => {
@@ -49,11 +49,10 @@ const CustomHeader: React.FC = () => {
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem("token"); // Xóa token khi logout
-    dispatch(logout()); // Dispatch action logout
+    sessionStorage.removeItem("token");
+    dispatch(logout());
     message.success("Đăng xuất thành công!");
   };
-
   return (
     <>
       <header className="flex items-center justify-between px-6 py-4 bg-white shadow-xl">
