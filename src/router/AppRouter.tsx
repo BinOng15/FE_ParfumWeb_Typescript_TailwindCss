@@ -1,5 +1,6 @@
 import React from "react";
 import { Routes, Route, useParams } from "react-router-dom";
+
 import Home from "../pages/customer/Home";
 import StaffDashboard from "../pages/staff/StaffDashboard";
 import AdminDashboard from "../pages/admin/AdminDashboard";
@@ -9,6 +10,7 @@ import Cart from "../pages/customer/Cart";
 import ProfileEdit from "../pages/customer/Profile";
 import OrderHistory from "../pages/customer/OrderHistory";
 import PaymentHistory from "../pages/customer/PaymentHistory";
+import MainLayout from "../layout/MainLayout";
 
 const AppRoutes: React.FC = () => {
   const PerfumeProductDetailWrapper: React.FC = () => {
@@ -17,23 +19,69 @@ const AppRoutes: React.FC = () => {
 
     return <PerfumeProductDetail productId={productId} />;
   };
+
   return (
     <Routes>
-      {/* Customer Pages */}
-      <Route path="/" element={<Home />} />
-      <Route path="/perfumeProduct" element={<PerfumeProduct />} />
+      {/* Customer Pages - Sử dụng MainLayout */}
+      <Route
+        path="/"
+        element={
+          <MainLayout>
+            <Home />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/perfumeProduct"
+        element={
+          <MainLayout>
+            <PerfumeProduct />
+          </MainLayout>
+        }
+      />
       <Route
         path="/perfumeProductDetail/:id"
-        element={<PerfumeProductDetailWrapper />}
+        element={
+          <MainLayout>
+            <PerfumeProductDetailWrapper />
+          </MainLayout>
+        }
       />
-      <Route path="/cart" element={<Cart />} />
-      <Route path="/profiles" element={<ProfileEdit />} />
-      <Route path="/oderhistory" element={<OrderHistory />} />
-      <Route path="/paymenthistory" element={<PaymentHistory />} />
-      {/* Staff Pages */}
+      <Route
+        path="/cart"
+        element={
+          <MainLayout>
+            <Cart />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/profiles"
+        element={
+          <MainLayout>
+            <ProfileEdit />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/oderhistory"
+        element={
+          <MainLayout>
+            <OrderHistory />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/paymenthistory"
+        element={
+          <MainLayout>
+            <PaymentHistory />
+          </MainLayout>
+        }
+      />
+      {/* Staff Pages - Có thể không dùng MainLayout nếu không cần header/footer */}
       <Route path="/staff" element={<StaffDashboard />} />
-
-      {/* Admin Pages */}
+      {/* Admin Pages - Có thể không dùng MainLayout nếu không cần header/footer */}
       <Route path="/admin" element={<AdminDashboard />} />
     </Routes>
   );
