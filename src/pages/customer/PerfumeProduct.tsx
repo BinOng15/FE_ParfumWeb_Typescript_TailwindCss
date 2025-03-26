@@ -9,7 +9,7 @@ import {
 
 import { axiosInstance } from "../../services/axiosInstance";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+//import { useDispatch } from "react-redux";
 
 export interface GetAllProductRequest {
   pageNum: number;
@@ -98,7 +98,7 @@ const PerfumeProduct: React.FC = () => {
   const [currentPage,] = useState(1);
   const [, setTotalItems] = useState(0);
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  //const dispatch = useDispatch();
   // Lấy danh sách sản phẩm hiển thị theo trang
   const getAllProducts = async (pageNum: number) => {
     try {
