@@ -1,23 +1,24 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
 import { DeleteFilled } from "@ant-design/icons";
-import { useDispatch, useSelector } from "react-redux";
+//import { useSelector } from "react-redux";
 import { CartProduct } from "../../redux/cartSlice";
-import { Pagination } from "antd";
+//import { Pagination } from "antd";
 
 // Fake danh sách sản phẩm
-const fakeProducts = Array(100)
-  .fill(null)
-  .map((_, index) => ({
-    id: index + 1,
-    name: `Nước hoa ${index + 1}`,
-    description: "Hương thơm sang trọng, lưu hương lâu.",
-    img: "https://insacmau.com/wp-content/uploads/2023/08/hop-dung-nuoc-hoa-chiet-9-1200x900.jpg",
-    price: `${((index % 5) + 1) * 500}.000 VNĐ`,
-    oldPrice: index % 3 === 0 ? `${((index % 5) + 1) * 600}.000 VNĐ` : null, // Random giá cũ
-    rating: Math.floor(Math.random() * 5) + 1, // Random từ 1-5 sao
-    discount: index % 2 === 0 ? "-15%" : "-10%", // Random giảm giá
-    size: ["30ML", "50ML", "100ML"],
-  }));
+// const fakeProducts = Array(100)
+//   .fill(null)
+//   .map((_, index) => ({
+//     id: index + 1,
+//     name: `Nước hoa ${index + 1}`,
+//     description: "Hương thơm sang trọng, lưu hương lâu.",
+//     img: "https://insacmau.com/wp-content/uploads/2023/08/hop-dung-nuoc-hoa-chiet-9-1200x900.jpg",
+//     price: `${((index % 5) + 1) * 500}.000 VNĐ`,
+//     oldPrice: index % 3 === 0 ? `${((index % 5) + 1) * 600}.000 VNĐ` : null, // Random giá cũ
+//     rating: Math.floor(Math.random() * 5) + 1, // Random từ 1-5 sao
+//     discount: index % 2 === 0 ? "-15%" : "-10%", // Random giảm giá
+//     size: ["30ML", "50ML", "100ML"],
+//   }));
 
 const customScrollbarStyles = `
     /* Custom scrollbar styles */
@@ -42,9 +43,9 @@ const customScrollbarStyles = `
     `;
 
 const Cart: React.FC = () => {
-  const { products } = useSelector((state: any) => state.cart);
+  //const { products } = useSelector((state: any) => state.cart);
   const [productsSelected, setProductsSelected] = useState<CartProduct[]>([]);
-  const dispatch = useDispatch();
+  // const dispatch = useDispatch();
 
   useEffect(() => {
     const styleSheet = document.createElement("style");
@@ -55,28 +56,28 @@ const Cart: React.FC = () => {
   }, [productsSelected]);
 
   // Function to handle checkbox changes
-  const handleCheckboxChange = (product: CartProduct, isChecked: boolean) => {
-    if (isChecked) {
-      // Add the product to the selected list
-      setProductsSelected((prevSelected) => [...prevSelected, product]);
-    } else {
-      // Remove the product from the selected list
-      setProductsSelected((prevSelected) =>
-        prevSelected.filter((p) => p.productId !== product.productId)
-      );
-    }
-  };
+  // const handleCheckboxChange = (product: CartProduct, isChecked: boolean) => {
+  //   if (isChecked) {
+  //     // Add the product to the selected list
+  //     setProductsSelected((prevSelected) => [...prevSelected, product]);
+  //   } else {
+  //     // Remove the product from the selected list
+  //     setProductsSelected((prevSelected) =>
+  //       prevSelected.filter((p) => p.productId !== product.productId)
+  //     );
+  //   }
+  // };
 
-  // Function to handle checkbox select all
-  const handleCheckboxSelectAll = () => {
-    if (productsSelected.length != products.length) {
-      // Add all the product to the selected list
-      setProductsSelected([...products]);
-    } else {
-      // Remove all the product from the selected list
-      setProductsSelected([]);
-    }
-  };
+  // // Function to handle checkbox select all
+  // const handleCheckboxSelectAll = () => {
+  //   if (productsSelected.length != products.length) {
+  //     // Add all the product to the selected list
+  //     setProductsSelected([...products]);
+  //   } else {
+  //     // Remove all the product from the selected list
+  //     setProductsSelected([]);
+  //   }
+  // };
 
   return (
 
@@ -401,14 +402,14 @@ const Cart: React.FC = () => {
       </div>
 
       {/* Phân trang */}
-      <div className="flex justify-center mt-6">
+      {/* <div className="flex justify-center mt-6">
         <Pagination
           current={currentPage}
           total={fakeProducts.length}
           pageSize={itemsPerPage}
           onChange={(page) => setCurrentPage(page)}
         />
-      </div>
+      </div> */}
       <div className="w-[60%] ml-auto mt-6 p-6 bg-white border border-gray-200 rounded-lg shadow">
         {/* Mã giảm giá */}
         <div className="flex items-center mb-6">
