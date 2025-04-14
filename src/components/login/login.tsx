@@ -1,6 +1,9 @@
-import React from "react";
-import { Button, Input, Modal } from "antd";
+import React, { useState } from "react";
+import { Button, Input, Modal, message } from "antd";
 import { GoogleOutlined, FacebookOutlined } from "@ant-design/icons";
+import { useDispatch } from "react-redux";
+import authService from "../../services/authService";
+import { login } from "../../redux/authSlice";
 
 interface LoginModalProps {
   isVisible: boolean;
@@ -15,6 +18,30 @@ const LoginModal: React.FC<LoginModalProps> = ({
   onLogin,
   onSwitchToSignup,
 }) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const dispatch = useDispatch();
+
+  const handleLogin = async () => {
+    try {
+      const token = await authService.userLogin(email, password);
+      const user = await authService.getCurrentUser(token);
+      const userData = {
+        customerId: user.id,
+        email: user.email,
+        roleName: user.role,
+      };
+      // Lưu token vào sessionStorage
+      sessionStorage.setItem("token", token);
+      dispatch(login(userData));
+      onLogin();
+      onClose();
+      message.success("Đăng nhập thành công!");
+    } catch (error) {
+      console.error("Login failed:", error);
+      message.error("Đăng nhập thất bại. Vui lòng kiểm tra lại email hoặc mật khẩu!");
+    }
+  };
   return (
     <Modal
       title={null}
@@ -24,15 +51,19 @@ const LoginModal: React.FC<LoginModalProps> = ({
       centered
       className="custom-login-modal"
     >
-      <div className="flex flex-col ml-[80px] ">
+      <div className="flex flex-col ml-[80px]">
         <h2 className="flex text-white text-3xl font-medium mb-4">Đăng nhập</h2>
         <h2 className="flex text-pink-500 text-sm py-1">Email</h2>
         <Input
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           placeholder="Email"
           className="w-4/5 h-10 px-4 rounded-lg border border-gray-300 text-sm mb-3"
         />
-        <h2 className="flex text-pink-500 text-sm py-1">Mật Khẩu ?</h2>
+        <h2 className="flex text-pink-500 text-sm py-1">Mật Khẩu</h2>
         <Input.Password
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
           placeholder="Mật khẩu"
           className="w-4/5 h-10 px-4 rounded-lg border border-gray-300 text-sm mb-3"
         />
@@ -43,7 +74,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
         </div>
 
         <div className="space-y-4 mt-4">
-          {/* Dòng chứa các icon ở bên trái và nút Đăng nhập ở bên phải */}
           <div className="flex justify-between items-center">
             <div>
               <Button icon={<FacebookOutlined />} className="mr-2" />
@@ -52,8 +82,8 @@ const LoginModal: React.FC<LoginModalProps> = ({
             <div>
               <Button
                 type="primary"
-                className="bg-pink-600 mr-[62px] "
-                onClick={onLogin}
+                className="bg-pink-600 mr-[62px]"
+                onClick={handleLogin}
               >
                 Đăng nhập
               </Button>

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Avatar, Upload, message } from "antd";
 import { EditOutlined } from "@ant-design/icons";
-import MainLayout from "../../layout/MainLayout";
+
+import Sidebar from "../../components/Profile/SidebarProfli";
 
 const ProfileEdit = () => {
     const [profile, setProfile] = useState({
@@ -31,8 +32,11 @@ const ProfileEdit = () => {
     };
 
     return (
-        <MainLayout>
-            <div className="max-w-lg mx-auto bg-white shadow-md rounded-lg p-6">
+
+        <div className="flex">
+            <Sidebar />
+            <div className="flex-grow p-6 bg-white rounded-lg">
+
                 <h2 className="text-xl font-semibold mb-4">Thông tin cá nhân</h2>
                 <div className="space-y-4">
                     {/* Avatar Upload với Hover */}
@@ -130,8 +134,9 @@ const ProfileEdit = () => {
                         Lưu
                     </button>
                 </div>
-            </div>
-        </MainLayout>
+            </div> </div>
+
+
     );
 };
 
