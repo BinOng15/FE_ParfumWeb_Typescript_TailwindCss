@@ -77,8 +77,8 @@ export interface GetAllCustomerRequest {
   keyWord: string;
   role: string;
   status: boolean;
-  isVerify: boolean;
-  isDelete: boolean;
+  is_Verify: boolean;
+  is_Delete: boolean;
 }
 
 export interface ChangePasswordRequest {

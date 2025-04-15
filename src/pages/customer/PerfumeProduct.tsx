@@ -130,6 +130,7 @@ const PerfumeProduct: React.FC = () => {
   useEffect(() => {
     getAllProducts(currentPage);
   }, [currentPage]);
+
   const handleProductClick = (productId: number) => {
     navigate(`/perfumeProductDetail/${productId}`); // Điều hướng đến trang chi tiết
   };

@@ -44,7 +44,7 @@ const customScrollbarStyles = `
 
 const Cart: React.FC = () => {
   //const { products } = useSelector((state: any) => state.cart);
-  const [productsSelected, setProductsSelected] = useState<CartProduct[]>([]);
+  const [productsSelected] = useState<CartProduct[]>([]);
   // const dispatch = useDispatch();
 
   useEffect(() => {

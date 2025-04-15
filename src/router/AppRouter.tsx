@@ -15,6 +15,9 @@ import MainLayout from "../layout/MainLayout";
 import { AuthContext, AuthProvider } from "../contexts/AuthContext";
 import UserManagementPage from "../pages/admin/customer/UserManagementPage";
 import LoginPage from "../pages/LoginPage";
+import StaffManagementPage from "../pages/admin/customer/StaffManagementPage";
+import SignUpPage from "../pages/SignUpPage";
+import VerifyAccountManagementPage from "../pages/admin/customer/VerifyAccountManagementPage";
 
 interface ProtectedRouteProps {
   element: JSX.Element;
@@ -73,6 +76,12 @@ const AppRoutes: React.FC = () => {
           path="/login"
           element={
             <LoginPage />
+          }
+        />
+        <Route
+          path="/signup"
+          element={
+            <SignUpPage />
           }
         />
         {/* Customer Pages */}
@@ -157,6 +166,24 @@ const AppRoutes: React.FC = () => {
           element={
             <ProtectedRouter
               element={<UserManagementPage />}
+              allowedRoles={["Admin"]}
+            />
+          }
+        />
+        <Route
+          path="/admin/verify-account"
+          element={
+            <ProtectedRouter
+              element={<VerifyAccountManagementPage />}
+              allowedRoles={["Admin"]}
+            />
+          }
+        />
+        <Route
+          path="/admin/staff-management"
+          element={
+            <ProtectedRouter
+              element={<StaffManagementPage />}
               allowedRoles={["Admin"]}
             />
           }

@@ -44,15 +44,16 @@ const authService = {
     customerId: number;
     email: string;
     roleName: string;
-    name?: string;
-    gender?: string;
-    phone?: string;
-    address?: string;
-    createdAt?: string;
-    modifiedDate?: string;
-    status?: boolean;
-    isDelete?: boolean;
-    isVerify?: boolean;
+    name: string;
+    password: string;
+    gender: string;
+    phone: string;
+    address: string;
+    createdAt: string;
+    modifiedDate: string;
+    status: boolean;
+    isDelete: boolean;
+    isVerify: boolean;
   }> => {
     try {
       const response = await axiosInstance.get("/customer/current-customer", {

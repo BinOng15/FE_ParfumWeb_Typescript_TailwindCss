@@ -26,7 +26,7 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const getRole = () => {
-    return user?.RoleName || null;
+    return user?.roleName || null;
   };
 
   return (

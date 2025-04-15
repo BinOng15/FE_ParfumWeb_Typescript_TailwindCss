@@ -1,14 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
-import { Modal, Form, Input, Select, Button, notification, message } from "antd";
+import { Modal, Form, Input, Select, Button, notification } from "antd";
 import customerService from "../../services/customerService";
-import { BaseResponse, CustomerResponseData, UpdateRequest } from "../models/Customer";
-
+import { CustomerResponseData, UpdateRequest } from "../models/Customer";
 
 const { Option } = Select;
 
 interface EditUserModalProps {
-  userId: number;
+  userId: number | null;
   visible: boolean;
   onClose: () => void;
   refreshUsers: () => void;
@@ -24,50 +23,34 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // if (visible && userId) {
-    //   setLoading(true);
-    //   customerService
-    //     .getCustomerById(userId)
-    //     .then((response: BaseResponse<CustomerResponseData>) => {
-    //       const user = response.data;
-    //       form.setFieldsValue({
-    //         email: user.email,
-    //         name: user.name,
-    //         gender: user.gender,
-    //         phone: user.phone,
-    //         address: user.address,
-    //         roleName: user.roleName,
-    //       });
-    //       setLoading(false);
-    //     })
-    //     .catch((error) => {
-    //       notification.error({
-    //         message: "Lỗi",
-    //         description: error.message || "Không thể tải dữ liệu người dùng!",
-    //       });
-    //       setLoading(false);
-    //     });
-    const fetchUserData = async () => {
-        try {
-            setLoading(true);
-            const user = await customerService.getCustomerById(userId);
-            form.setFieldValue({
-                email: user.email,
-                name: user.name,
-                gender: user.gender,
-                phone: user.phone,
-                address: user.address,
-                roleName: user.roleName,
-            });
-            setLoading(false);
-        } catch (error) {
-            message.error("Failed to fetch user data");
-        }
+    if (visible && userId) {
+      setLoading(true);
+      customerService
+        .getCustomerById(userId)
+        .then((user: CustomerResponseData) => {
+          form.setFieldsValue({
+            email: user.email,
+            name: user.name,
+            gender: user.gender,
+            phone: user.phone,
+            address: user.address,
+            roleName: user.roleName,
+          });
+          setLoading(false);
+        })
+        .catch(() => {
+          notification.error({
+            message: "Lỗi",
+            description: "Không thể tải dữ liệu người dùng!",
+          });
+          setLoading(false);
+        });
     }
-    
   }, [visible, userId, form]);
 
   const handleSubmit = async (values: any) => {
+    if (!userId) return;
+    setLoading(true);
     try {
       const request: UpdateRequest = {
         name: values.name,
@@ -82,11 +65,14 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
       });
       onClose();
       refreshUsers();
+      form.resetFields();
     } catch (error: any) {
       notification.error({
         message: "Lỗi",
         description: error.message || "Không thể cập nhật người dùng!",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -134,13 +120,17 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
             <Option value="Other">Khác</Option>
           </Select>
         </Form.Item>
-        <Form.Item name="phone" label="Số điện thoại">
+        <Form.Item
+          name="phone"
+          label="Số điện thoại"
+          rules={[{ pattern: /^\d{10,11}$/, message: "Số điện thoại không hợp lệ!" }]}
+        >
           <Input />
         </Form.Item>
         <Form.Item name="address" label="Địa chỉ">
           <Input />
         </Form.Item>
-        <Form.Item
+        {/* <Form.Item
           name="roleName"
           label="Vai trò"
           rules={[{ required: true, message: "Vui lòng chọn vai trò!" }]}
@@ -149,8 +139,9 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
             <Option value="User">Khách hàng</Option>
             <Option value="Staff">Nhân viên</Option>
             <Option value="Admin">Admin</Option>
+            <Option value="Manager">Quản lý</Option>
           </Select>
-        </Form.Item>
+        </Form.Item> */}
         <Form.Item>
           <Button type="primary" htmlType="submit" loading={loading}>
             Cập nhật

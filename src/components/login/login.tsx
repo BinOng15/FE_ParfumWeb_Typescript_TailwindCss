@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Button, Input, Modal, message } from "antd";
-import { GoogleOutlined, FacebookOutlined } from "@ant-design/icons";
+//import { GoogleOutlined, FacebookOutlined } from "@ant-design/icons";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import authService from "../../services/authService";
@@ -102,10 +102,10 @@ const LoginModal: React.FC<LoginModalProps> = ({
 
         <div className="space-y-4 mt-4">
           <div className="flex justify-between items-center">
-            <div>
+            {/* <div>
               <Button icon={<FacebookOutlined />} className="mr-2" />
               <Button icon={<GoogleOutlined />} />
-            </div>
+            </div> */}
             <div>
               <Button
                 type="primary"
