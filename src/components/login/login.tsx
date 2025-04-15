@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Button, Input, Modal, message } from "antd";
 import { GoogleOutlined, FacebookOutlined } from "@ant-design/icons";
 import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import authService from "../../services/authService";
 import { login } from "../../redux/authSlice";
 
@@ -21,27 +22,51 @@ const LoginModal: React.FC<LoginModalProps> = ({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const handleLogin = async () => {
     try {
       const token = await authService.userLogin(email, password);
       const user = await authService.getCurrentUser(token);
       const userData = {
-        customerId: user.id,
+        customerId: user.customerId,
         email: user.email,
-        roleName: user.role,
+        roleName: user.roleName,
       };
-      // Lưu token vào sessionStorage
-      sessionStorage.setItem("token", token);
       dispatch(login(userData));
       onLogin();
       onClose();
       message.success("Đăng nhập thành công!");
+
+      // Điều hướng dựa trên vai trò
+      switch (user.roleName) {
+        case "User":
+          navigate("/home");
+          break;
+        case "Staff":
+          navigate("/staff");
+          break;
+        case "Admin":
+          navigate("/admin/dashboard");
+          break;
+        default:
+          message.warning("Vai trò không hợp lệ, chuyển về trang mặc định!");
+          navigate("/");
+          break;
+      }
     } catch (error) {
-      console.error("Login failed:", error);
+      console.error("Đăng nhập thất bại:", error);
       message.error("Đăng nhập thất bại. Vui lòng kiểm tra lại email hoặc mật khẩu!");
     }
   };
+
+  // Hàm xử lý nhấn Enter
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleLogin();
+    }
+  };
+
   return (
     <Modal
       title={null}
@@ -57,6 +82,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
         <Input
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          onPressEnter={handleKeyPress} // Thêm sự kiện Enter
           placeholder="Email"
           className="w-4/5 h-10 px-4 rounded-lg border border-gray-300 text-sm mb-3"
         />
@@ -64,6 +90,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
         <Input.Password
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          onPressEnter={handleKeyPress} // Thêm sự kiện Enter
           placeholder="Mật khẩu"
           className="w-4/5 h-10 px-4 rounded-lg border border-gray-300 text-sm mb-3"
         />

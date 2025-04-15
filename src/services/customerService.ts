@@ -134,10 +134,10 @@ const customerService = {
     } catch (error: any) {
       console.error(`Error deleting customer ${id}:`, error);
       return {
-        Code: 500,
-        Success: false,
-        Message: error.response?.data?.Message || "Server Error",
-        Data: null,
+        code: 500,
+        success: false,
+        message: error.response?.data?.Message || "Server Error",
+        data: null,
       } as BaseResponse<any>;
     }
   },
@@ -151,10 +151,10 @@ const customerService = {
     } catch (error: any) {
       console.error("Error changing password:", error);
       return {
-        Code: 500,
-        Success: false,
-        Message: error.response?.data?.Message || "Server Error",
-        Data: null,
+        code: 500,
+        success: false,
+        message: error.response?.data?.Message || "Server Error",
+        data: null,
       } as BaseResponse<any>;
     }
   },
@@ -168,10 +168,10 @@ const customerService = {
     } catch (error: any) {
       console.error("Error resending verification email:", error);
       return {
-        Code: 500,
-        Success: false,
-        Message: error.response?.data?.Message || "Server Error",
-        Data: null,
+        code: 500,
+        success: false,
+        message: error.response?.data?.Message || "Server Error",
+        data: null,
       } as BaseResponse<any>;
     }
   },

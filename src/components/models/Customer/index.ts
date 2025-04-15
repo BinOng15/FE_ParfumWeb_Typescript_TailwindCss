@@ -7,55 +7,55 @@ export type AuthContextType = {
 };
 
 export interface BaseResponse<T = any> {
-  Code: number;
-  Success: boolean;
-  Message: string | null;
-  Data: T;
+  code: number;
+  success: boolean;
+  message: string | null;
+  data: T;
 }
 
 export interface Customer {
-  Name: string;
-  Email: string;
-  Password: string;
-  Gender: string;
-  Phone: string;
-  Address: string;
-  RoleName: string | null;
-  CreatedAt: string;
-  ModifiedDate: string | null;
-  Status: boolean;
-  IsDelete: boolean;
-  IsVerify: boolean;
+  name: string;
+  email: string;
+  password: string;
+  gender: string;
+  phone: string;
+  address: string;
+  roleName: string | null;
+  createdAt: string;
+  modifiedDate: string | null;
+  status: boolean;
+  isDelete: boolean;
+  isVerify: boolean;
 }
 
 export interface CustomerResponseData {
-  CustomerId: number;
-  Name: string;
-  Email: string;
-  Password: string;
-  Gender: string;
-  Phone: string;
-  Address: string;
-  RoleName: string | null;
-  CreatedAt: string;
-  ModifiedDate: string;
-  Status: boolean;
-  IsDelete: boolean;
-  IsVerify: boolean;
+  customerId: number;
+  name: string;
+  email: string;
+  password: string;
+  gender: string;
+  phone: string;
+  address: string;
+  roleName: string | null;
+  createdAt: string;
+  modifiedDate: string;
+  status: boolean;
+  isDelete: boolean;
+  isVerify: boolean;
 }
 
 export interface RegisterRequest {
-  Email: string;
-  Password: string;
-  Name: string;
-  Gender: string;
-  Phone: string;
-  Address: string;
+  email: string;
+  password: string;
+  name: string;
+  gender: string;
+  phone: string;
+  address: string;
 }
 
 export interface LoginRequest {
-  Email: string;
-  Password: string;
+  email: string;
+  password: string;
 }
 
 export interface LoginResponse {
@@ -64,21 +64,24 @@ export interface LoginResponse {
 }
 
 export interface UpdateRequest {
-  Name?: string;
-  Gender?: string;
-  Phone?: string;
-  Address?: string;
-  Password?: string;
+  name?: string;
+  gender?: string;
+  phone?: string;
+  address?: string;
+  password?: string;
 }
 
 export interface GetAllCustomerRequest {
-  PageNumber: number;
-  PageSize: number;
-  SearchTerm?: string;
-  Status?: boolean;
+  pageNum: number;
+  pageSize: number;
+  keyWord: string;
+  role: string;
+  status: boolean;
+  isVerify: boolean;
+  isDelete: boolean;
 }
 
 export interface ChangePasswordRequest {
-  CurrentPassword: string;
-  NewPassword: string;
+  currentPassword: string;
+  newPassword: string;
 }

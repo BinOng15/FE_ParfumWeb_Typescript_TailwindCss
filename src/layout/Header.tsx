@@ -51,7 +51,7 @@ const CustomHeader: React.FC = () => {
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem("token");
+    localStorage.removeItem("token");
     dispatch(logout());
     message.success("Đăng xuất thành công!");
   };

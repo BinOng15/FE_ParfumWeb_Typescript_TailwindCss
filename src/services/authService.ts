@@ -1,4 +1,4 @@
-// /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { axiosInstance, logout } from "./axiosInstance";
 
 const authService = {
@@ -13,34 +13,47 @@ const authService = {
         response.data.accessToken ||
         response.data.data?.token;
       if (token) {
-        sessionStorage.setItem("token", token);
+        localStorage.setItem("token", token);
         return token;
       }
-      throw new Error("Token not found in response!");
+      throw new Error("Token không tìm thấy trong phản hồi!");
     } catch (error) {
-      console.error("Error logging in:", error);
+      console.error("Lỗi khi đăng nhập:", error);
       throw error;
     }
   },
-  loginByGoogle: async (GooleId: string): Promise<string> => {
+  loginByGoogle: async (googleId: string): Promise<string> => {
     try {
-      const response = await axiosInstance.post("customer/loginmail", GooleId);
+      const response = await axiosInstance.post("/customer/loginmail", { googleId });
       const token =
         response.data.token ||
         response.data.accessToken ||
         response.data.data?.token;
       if (token) {
-        sessionStorage.setItem("token", token);
+        localStorage.setItem("token", token);
         return token;
       }
-      throw new Error("Token not found in response!");
+      throw new Error("Token không tìm thấy trong phản hồi!");
     } catch (error) {
-      console.error("Error logging in with Google:", error);
+      console.error("Lỗi khi đăng nhập bằng Google:", error);
       throw error;
     }
   },
   logout,
-  getCurrentUser: async (token: string) => {
+  getCurrentUser: async (token: string): Promise<{
+    customerId: number;
+    email: string;
+    roleName: string;
+    name?: string;
+    gender?: string;
+    phone?: string;
+    address?: string;
+    createdAt?: string;
+    modifiedDate?: string;
+    status?: boolean;
+    isDelete?: boolean;
+    isVerify?: boolean;
+  }> => {
     try {
       const response = await axiosInstance.get("/customer/current-customer", {
         headers: {
@@ -48,15 +61,17 @@ const authService = {
           "Content-Type": "application/json",
         },
       });
-      const user = response.data;
+      const user = response.data.data; // Lấy response.data.data
       if (user) {
-        sessionStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("user", JSON.stringify(user));
         return user;
       }
-      throw new Error("Token not found in response!");
+      throw new Error("Dữ liệu người dùng không tìm thấy trong phản hồi!");
     } catch (error) {
-      throw new Error("Cannot get user data!");
+      console.error("Lỗi khi lấy dữ liệu người dùng:", error);
+      throw new Error("Không thể lấy dữ liệu người dùng!");
     }
   },
 };
+
 export default authService;
