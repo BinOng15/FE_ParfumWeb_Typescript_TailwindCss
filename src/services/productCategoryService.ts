@@ -90,12 +90,12 @@ const productCategoryService = {
     try {
       const response: AxiosResponse<BaseResponse<ListProductCategoryResponse>> =
         await axiosInstance.post(
-          `/productcategory/searchbyproductid/${data.ProductId}`
+          `/productcategory/searchbyproductid/${data.productId}`
         );
       return response.data;
     } catch (error) {
       console.error(
-        `Error fetching categories by product ID ${data.ProductId}:`,
+        `Error fetching categories by product ID ${data.productId}:`,
         error
       );
       throw error;
@@ -109,12 +109,12 @@ const productCategoryService = {
     try {
       const response: AxiosResponse<BaseResponse<ListProductCategoryResponse>> =
         await axiosInstance.post(
-          `/productcategory/searchbycategoryid/${data.CategoryId}`
+          `/productcategory/searchbycategoryid/${data.categoryId}`
         );
       return response.data;
     } catch (error) {
       console.error(
-        `Error fetching products by category ID ${data.CategoryId}:`,
+        `Error fetching products by category ID ${data.categoryId}:`,
         error
       );
       throw error;

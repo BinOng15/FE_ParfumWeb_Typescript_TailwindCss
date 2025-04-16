@@ -8,8 +8,8 @@ export interface BaseResponse<T = any> {
 }
 
 export interface CategoryResponse {
-  CategoryId: number;
-  Name: string;
+  categoryId: number;
+  name: string;
   Description: string;
   Status: boolean;
 }
@@ -29,6 +29,7 @@ export interface GetAllCategoryRequest {
 }
 
 export interface DynamicResponse<T> {
+  data: any;
   Code: number;
   Success: boolean;
   Message: string | null;
