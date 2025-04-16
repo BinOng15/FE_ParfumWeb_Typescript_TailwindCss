@@ -5,6 +5,7 @@ import {
   BaseResponse,
   CreateProductCategoryRequest,
   DeleteProductCategoryRequest,
+  GetAllProductCategoryRequest,
   GetCategoriesByProductRequest,
   GetProductsByCategoryRequest,
   ListProductCategoryResponse,
@@ -30,7 +31,21 @@ const productCategoryService = {
       throw error;
     }
   },
+  getallProductCategory: async (
+    data: GetAllProductCategoryRequest
+  ): Promise<{ pageData: ProductCategoryResponse[]; pageInfo: { totalItem: number } }> => {
 
+    try {
+      const response = await axiosInstance.post("/productcategory/getallproductcategories", data);
+      return {
+        pageData: response.data.data.pageData || [],
+        pageInfo: response.data.data.pageInfo || { totalItem: 0 },
+      };
+    } catch (error) {
+      console.error("Error fetching all product categories:", error);
+      throw error;
+    }
+  },
   // Cập nhật mối quan hệ sản phẩm-danh mục
   updateProductCategory: async (
     data: UpdateProductCategoryRequest
@@ -90,12 +105,12 @@ const productCategoryService = {
     try {
       const response: AxiosResponse<BaseResponse<ListProductCategoryResponse>> =
         await axiosInstance.post(
-          `/productcategory/searchbyproductid/${data.ProductId}`
+          `/productcategory/searchbyproductid/${data.productId}`
         );
       return response.data;
     } catch (error) {
       console.error(
-        `Error fetching categories by product ID ${data.ProductId}:`,
+        `Error fetching categories by product ID ${data.productId}:`,
         error
       );
       throw error;
@@ -109,12 +124,12 @@ const productCategoryService = {
     try {
       const response: AxiosResponse<BaseResponse<ListProductCategoryResponse>> =
         await axiosInstance.post(
-          `/productcategory/searchbycategoryid/${data.CategoryId}`
+          `/productcategory/searchbycategoryid/${data.categoryId}`
         );
       return response.data;
     } catch (error) {
       console.error(
-        `Error fetching products by category ID ${data.CategoryId}:`,
+        `Error fetching products by category ID ${data.categoryId}:`,
         error
       );
       throw error;

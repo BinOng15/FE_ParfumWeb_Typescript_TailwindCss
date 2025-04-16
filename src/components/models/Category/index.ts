@@ -4,21 +4,21 @@ export interface BaseResponse<T = any> {
   Code: number;
   Success: boolean;
   Message: string | null;
-  Data: T;
+  data: T;
 }
 
 export interface CategoryResponse {
-  CategoryId: number;
-  Name: string;
-  Description: string;
-  Status: boolean;
+  categoryId: number;
+  name: string;
+  description: string;
+  status: boolean;
 }
 
 export interface CreateCategoryRequest {
-  CategoryId?: number; // Có thể không bắt buộc nếu backend tự tạo
-  Name: string;
-  Description: string;
-  Status: boolean;
+  categoryId?: number; // Có thể không bắt buộc nếu backend tự tạo
+  name: string;
+  description: string;
+  status: boolean;
 }
 
 export interface GetAllCategoryRequest {

@@ -8,34 +8,39 @@ export interface BaseResponse<T = any> {
 }
 
 export interface ProductCategoryResponse {
-  ProductId: number;
-  CategoryId: number;
-  Status: boolean;
+  productId: number;
+  categoryId: number;
+  status: boolean;
 }
 
 export interface CreateProductCategoryRequest {
-  ProductId: number;
-  CategoryId: number;
-  Status: boolean;
+  productId: number;
+  categoryId: number;
+  status: boolean;
 }
 
 export interface UpdateProductCategoryRequest {
-  ProductId: number;
-  CategoryId: number;
-  Status: boolean;
+  productId: number;
+  categoryId: number;
+  status: boolean;
 }
 
 export interface DeleteProductCategoryRequest {
-  ProductId: number;
-  CategoryId: number;
+  productId: number;
+  categoryId: number;
 }
-
+export interface GetAllProductCategoryRequest {
+  pageNum: number;
+  pageSize: number;
+  keyWord?: string;
+  Status?: boolean;
+}
 export interface GetCategoriesByProductRequest {
-  ProductId: number;
+  productId: number;
 }
 
 export interface GetProductsByCategoryRequest {
-  CategoryId: number;
+  categoryId: number;
 }
 
 export interface ListProductCategoryResponse {

@@ -52,7 +52,7 @@ const HeaderAdmin: React.FC<AppHeaderProps> = ({ collapsed, setCollapsed }) => {
     return (
         <Layout>
             <Header
-                className="header flex justify-between items-center bg-[#FF8787]"
+                className="header flex justify-between items-center bg-[#d9d9d9]"
                 style={{ zIndex: 1001, position: "fixed", width: "100%" }}
             >
                 <div className="flex-1 flex justify-start">
@@ -61,14 +61,23 @@ const HeaderAdmin: React.FC<AppHeaderProps> = ({ collapsed, setCollapsed }) => {
                             collapsed ? MenuUnfoldOutlined : MenuFoldOutlined,
                             {
                                 className: "trigger",
-                                style: { color: "white", fontSize: "20px", cursor: "pointer" },
+                                style: { color: "black", fontSize: "20px", cursor: "pointer" },
                                 onClick: () => setCollapsed(!collapsed),
                             }
                         )}
                 </div>
 
                 <div className="flex-1 flex justify-center">
-                    <div className="font-bold text-white">Eun de Parfum</div>
+                    <div
+                        className="font-bold text-black"
+                        style={{
+                            fontFamily: "Pacifico",
+                            fontWeight: 200,
+                            fontSize: 40,
+                        }}
+                    >
+                        Eun de Parfum
+                    </div>
                 </div>
 
                 <div className="flex-1 flex justify-end items-center">
@@ -87,7 +96,7 @@ const HeaderAdmin: React.FC<AppHeaderProps> = ({ collapsed, setCollapsed }) => {
                                 }}
                             >
                                 <Avatar icon={<UserOutlined />} />
-                                <span style={{ color: "white", marginLeft: "10px" }}>
+                                <span style={{ color: "black", marginLeft: "10px" }}>
                                     Xin chào, Admin
                                 </span>
                             </div>

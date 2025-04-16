@@ -5,7 +5,6 @@ import {
   BaseResponse,
   CategoryResponse,
   CreateCategoryRequest,
-  DynamicResponse,
   GetAllCategoryRequest,
 } from "../components/models/Category";
 
@@ -15,12 +14,11 @@ const categoryService = {
     data: CreateCategoryRequest
   ): Promise<BaseResponse<CategoryResponse>> => {
     try {
-      const response: AxiosResponse<BaseResponse<CategoryResponse>> =
-        await axiosInstance.post("/category/create", data, {
-          headers: {
-            "Content-Type": "application/json", // Đảm bảo khớp với backend
-          },
-        });
+      const response = await axiosInstance.post("/category/create", data, {
+        headers: {
+          "Content-Type": "application/json", // Đảm bảo khớp với backend
+        },
+      });
       return response.data;
     } catch (error) {
       console.error("Error creating category:", error);
@@ -31,11 +29,13 @@ const categoryService = {
   // Lấy tất cả danh mục (phân trang)
   getAllCategories: async (
     data: GetAllCategoryRequest
-  ): Promise<DynamicResponse<CategoryResponse>> => {
+  ): Promise<{ pageData: CategoryResponse[]; pageInfo: { totalItem: number } }> => {
     try {
-      const response: AxiosResponse<DynamicResponse<CategoryResponse>> =
-        await axiosInstance.post("/category/search", data);
-      return response.data;
+      const response = await axiosInstance.post("/category/search", data);
+      return {
+        pageData: response.data.data.pageData || [],
+        pageInfo: response.data.data.pageInfo || { totalItem: 0 },
+      };
     } catch (error) {
       console.error("Error fetching all categories:", error);
       throw error;
@@ -45,11 +45,10 @@ const categoryService = {
   // Lấy danh mục theo ID
   getCategoryById: async (
     categoryId: number
-  ): Promise<BaseResponse<CategoryResponse>> => {
+  ): Promise<CategoryResponse> => {
     try {
-      const response: AxiosResponse<BaseResponse<CategoryResponse>> =
-        await axiosInstance.get(`/category/getby/${categoryId}`);
-      return response.data;
+      const response = await axiosInstance.get(`/category/getby/${categoryId}`);
+      return response.data.data;
     } catch (error) {
       console.error(`Error fetching category by ID ${categoryId}:`, error);
       throw error;
