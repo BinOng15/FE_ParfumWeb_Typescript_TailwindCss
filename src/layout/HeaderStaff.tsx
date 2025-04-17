@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React from "react";
 import { Layout, Avatar, Dropdown, message } from "antd";
 import {
     UserOutlined,
@@ -7,7 +8,7 @@ import {
     MenuFoldOutlined,
 } from "@ant-design/icons";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../redux/authSlice";
 
 const { Header } = Layout;
@@ -20,22 +21,15 @@ interface AppHeaderProps {
 const HeaderStaff: React.FC<AppHeaderProps> = ({ collapsed, setCollapsed }) => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
     const dispatch = useDispatch();
-
-    useEffect(() => {
-        const checkLoginStatus = () => {
-            const token =
-                localStorage.getItem("token") || sessionStorage.getItem("accessToken");
-            setIsLoggedIn(!!token);
-        };
-        checkLoginStatus();
-    }, []);
+    const { isAuthenticated } = useSelector((state: any) => state.auth); // Lấy trạng thái từ Redux
 
     const handleLogout = () => {
-        sessionStorage.removeItem("token");
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
         dispatch(logout());
         message.success("Đăng xuất thành công!");
+        navigate("/login");
     };
 
     const avatarMenuItems = [
@@ -47,7 +41,7 @@ const HeaderStaff: React.FC<AppHeaderProps> = ({ collapsed, setCollapsed }) => {
                     onClick={handleLogout}
                     style={{ display: "flex", alignItems: "center" }}
                 >
-                    Logout
+                    Đăng xuất
                 </a>
             ),
         },
@@ -58,7 +52,7 @@ const HeaderStaff: React.FC<AppHeaderProps> = ({ collapsed, setCollapsed }) => {
     return (
         <Layout>
             <Header
-                className="header flex justify-between items-center bg-[#009EE0]"
+                className="header flex justify-between items-center bg-[#d9d9d9]"
                 style={{ zIndex: 1001, position: "fixed", width: "100%" }}
             >
                 <div className="flex-1 flex justify-start">
@@ -67,21 +61,27 @@ const HeaderStaff: React.FC<AppHeaderProps> = ({ collapsed, setCollapsed }) => {
                             collapsed ? MenuUnfoldOutlined : MenuFoldOutlined,
                             {
                                 className: "trigger",
-                                style: { color: "white", fontSize: "20px", cursor: "pointer" },
+                                style: { color: "black", fontSize: "20px", cursor: "pointer" },
                                 onClick: () => setCollapsed(!collapsed),
                             }
                         )}
                 </div>
 
                 <div className="flex-1 flex justify-center">
-                    {/* <Link to="/">
-            <img src={""} alt="logo" className="h-20 w-auto" />
-          </Link> */}
-                    <div className="font-bold text-white">PEDIVAX</div>
+                    <div
+                        className="font-bold text-black"
+                        style={{
+                            fontFamily: "Pacifico",
+                            fontWeight: 200,
+                            fontSize: 40,
+                        }}
+                    >
+                        Eun de Parfum
+                    </div>
                 </div>
 
                 <div className="flex-1 flex justify-end items-center">
-                    {isLoggedIn ? (
+                    {isAuthenticated ? (
                         <Dropdown
                             menu={{ items: avatarMenuItems }}
                             trigger={["hover"]}
@@ -96,7 +96,7 @@ const HeaderStaff: React.FC<AppHeaderProps> = ({ collapsed, setCollapsed }) => {
                                 }}
                             >
                                 <Avatar icon={<UserOutlined />} />
-                                <span style={{ color: "white", marginLeft: "10px" }}>
+                                <span style={{ color: "black", marginLeft: "10px" }}>
                                     Xin chào, Staff
                                 </span>
                             </div>

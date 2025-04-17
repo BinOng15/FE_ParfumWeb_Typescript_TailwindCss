@@ -2,7 +2,6 @@ import React from "react";
 import { Menu } from "antd";
 import {
     DollarOutlined,
-    ExceptionOutlined,
     CheckSquareOutlined,
     DashOutlined,
 } from "@ant-design/icons";
@@ -16,19 +15,14 @@ const StaffSidebar: React.FC = () => {
         { key: "/staff/dashboard", icon: <DashOutlined />, label: "Bảng chính" },
 
         {
-            key: "/staff/check-in",
+            key: "/staff/order-management",
             icon: <CheckSquareOutlined />,
-            label: "Check in",
+            label: "Đơn hàng",
         },
         {
-            key: "/staff/payment",
+            key: "/staff/payment-management",
             icon: <DollarOutlined />,
             label: "Thanh toán",
-        },
-        {
-            key: "/staff/manage-appointment",
-            icon: <ExceptionOutlined />,
-            label: "Đăng ký tiêm",
         },
     ];
 
