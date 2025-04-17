@@ -24,6 +24,7 @@ import PerfumeIntroduction from "../pages/customer/PerfumeIntroduction";
 import ProductManagementPage from "../pages/admin/product/ProductManagementPage";
 import CategoryManagementPage from "../pages/admin/category/CategoryManagementPage";
 import ProductCategoryManagementPage from "../pages/admin/product-category/ProductCategoryManagementPage";
+import OrderManagementPage from "../pages/staff/order/OrderManagementPage";
 
 
 interface ProtectedRouteProps {
@@ -163,6 +164,15 @@ const AppRoutes: React.FC = () => {
           element={
             <ProtectedRouter
               element={<StaffDashboard />}
+              allowedRoles={["Staff"]}
+            />
+          }
+        />
+        <Route
+          path="/staff/order-management"
+          element={
+            <ProtectedRouter
+              element={<OrderManagementPage />}
               allowedRoles={["Staff"]}
             />
           }

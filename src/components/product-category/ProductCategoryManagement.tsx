@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
-import { Table, Input, Space, Row, Col, Modal, Descriptions } from "antd";
-import { ReloadOutlined, EyeOutlined } from "@ant-design/icons";
+import { Table, Input, Space, Row, Col, Modal, Descriptions, Popconfirm } from "antd";
+import { ReloadOutlined, EyeOutlined, DeleteOutlined } from "@ant-design/icons";
 import { ColumnType } from "antd/es/table";
 import productCategoryService from "../../services/productCategoryService";
 import productService from "../../services/productService";
@@ -114,6 +114,19 @@ const ProductCategoryManagement: React.FC = () => {
         setSelectedProductCategory(null);
     };
 
+    const handleDelete = async (productId: number, categoryId: number) => {
+        setLoading(true);
+        try {
+            await productCategoryService.deleteProductCategory({ productId, categoryId });
+            // Refresh the table after deletion
+            await fetchProductCategories(pagination.current, pagination.pageSize, searchKeyword);
+        } catch (error) {
+            console.error("Lỗi xóa mối quan hệ sản phẩm-danh mục:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const columns: ColumnType<EnhancedProductCategoryResponse>[] = [
         {
             title: "STT",
@@ -143,6 +156,17 @@ const ProductCategoryManagement: React.FC = () => {
                         style={{ color: "blue", cursor: "pointer", fontSize: "18px" }}
                         title="Xem chi tiết"
                     />
+                    <Popconfirm
+                        title="Bạn có chắc chắn muốn xóa mối quan hệ này?"
+                        onConfirm={() => handleDelete(record.productId, record.categoryId)}
+                        okText="Xóa"
+                        cancelText="Hủy"
+                    >
+                        <DeleteOutlined
+                            style={{ color: "red", cursor: "pointer", fontSize: "18px" }}
+                            title="Xóa"
+                        />
+                    </Popconfirm>
                 </Space>
             ),
         },
