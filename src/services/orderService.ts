@@ -20,7 +20,7 @@ const orderService = {
     ): Promise<BaseResponse<OrderResponse>> => {
         try {
             const response: AxiosResponse<BaseResponse<OrderResponse>> =
-                await axiosInstance.post("/orders/add-to-cart", data, {
+                await axiosInstance.post("/order/add-to-cart", data, {
                     headers: {
                         "Content-Type": "application/json",
                     },
@@ -38,7 +38,7 @@ const orderService = {
     ): Promise<BaseResponse<OrderResponse>> => {
         try {
             const response: AxiosResponse<BaseResponse<OrderResponse>> =
-                await axiosInstance.put("/orders/update-cart", data, {
+                await axiosInstance.put("/order/update-cart", data, {
                     headers: {
                         "Content-Type": "application/json",
                     },
@@ -56,7 +56,7 @@ const orderService = {
     ): Promise<BaseResponse<OrderResponse>> => {
         try {
             const response: AxiosResponse<BaseResponse<OrderResponse>> =
-                await axiosInstance.post("/orders", data, {
+                await axiosInstance.post("/order", data, {
                     headers: {
                         "Content-Type": "application/json",
                     },
@@ -75,7 +75,7 @@ const orderService = {
     ): Promise<BaseResponse<OrderResponse>> => {
         try {
             const response: AxiosResponse<BaseResponse<OrderResponse>> =
-                await axiosInstance.put(`/orders/${orderId}`, data, {
+                await axiosInstance.put(`/order/${orderId}`, data, {
                     headers: {
                         "Content-Type": "application/json",
                     },
@@ -94,7 +94,7 @@ const orderService = {
     ): Promise<BaseResponse<OrderResponse>> => {
         try {
             const response: AxiosResponse<BaseResponse<OrderResponse>> =
-                await axiosInstance.delete(`/orders/${orderId}`, {
+                await axiosInstance.delete(`/order/${orderId}`, {
                     params: { status },
                 });
             return response.data;
@@ -108,7 +108,7 @@ const orderService = {
     getOrderById: async (orderId: number): Promise<OrderResponse> => {
         try {
             const response: AxiosResponse<BaseResponse<OrderResponse>> =
-                await axiosInstance.get(`/orders/${orderId}`);
+                await axiosInstance.get(`/order/${orderId}`);
             return response.data.Data;
         } catch (error) {
             console.error(`Error fetching order by ID ${orderId}:`, error);
@@ -139,7 +139,7 @@ const orderService = {
     ): Promise<BaseResponse<OrderDetailResponse>> => {
         try {
             const response: AxiosResponse<BaseResponse<OrderDetailResponse>> =
-                await axiosInstance.put("/orders/order-details", data, {
+                await axiosInstance.put("/order/order-details", data, {
                     headers: {
                         "Content-Type": "application/json",
                     },
@@ -157,7 +157,7 @@ const orderService = {
     ): Promise<OrderDetailResponse> => {
         try {
             const response: AxiosResponse<BaseResponse<OrderDetailResponse>> =
-                await axiosInstance.get(`/orders/order-details/${orderDetailId}`);
+                await axiosInstance.get(`/order/order-details/${orderDetailId}`);
             return response.data.Data;
         } catch (error) {
             console.error(`Error fetching order detail by ID ${orderDetailId}:`, error);

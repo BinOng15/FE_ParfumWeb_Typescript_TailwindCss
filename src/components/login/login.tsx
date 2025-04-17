@@ -1,6 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from "react";
 import { Button, Input, Modal, message } from "antd";
-//import { GoogleOutlined, FacebookOutlined } from "@ant-design/icons";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import authService from "../../services/authService";
@@ -28,19 +28,26 @@ const LoginModal: React.FC<LoginModalProps> = ({
     try {
       const token = await authService.userLogin(email, password);
       const user = await authService.getCurrentUser(token);
+      console.log("User data from authService:", user); // Thêm console log
       const userData = {
         customerId: user.customerId,
         email: user.email,
         roleName: user.roleName,
       };
+      console.log("userData for Redux:", userData); // Thêm console log
       dispatch(login(userData));
+
+      // Lưu vào localStorage
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(userData));
+
       onLogin();
       onClose();
       message.success("Đăng nhập thành công!");
 
       // Điều hướng dựa trên vai trò
       switch (user.roleName) {
-        case "User":
+        case "Customer": // Sửa từ "User" thành "Customer" để đồng bộ với LoginPage.tsx
           navigate("/home");
           break;
         case "Staff":
@@ -54,7 +61,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
           navigate("/");
           break;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Đăng nhập thất bại:", error);
       message.error("Đăng nhập thất bại. Vui lòng kiểm tra lại email hoặc mật khẩu!");
     }
@@ -82,7 +89,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
         <Input
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          onPressEnter={handleKeyPress} // Thêm sự kiện Enter
+          onPressEnter={handleKeyPress}
           placeholder="Email"
           className="w-4/5 h-10 px-4 rounded-lg border border-gray-300 text-sm mb-3"
         />
@@ -90,7 +97,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
         <Input.Password
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          onPressEnter={handleKeyPress} // Thêm sự kiện Enter
+          onPressEnter={handleKeyPress}
           placeholder="Mật khẩu"
           className="w-4/5 h-10 px-4 rounded-lg border border-gray-300 text-sm mb-3"
         />
@@ -102,10 +109,6 @@ const LoginModal: React.FC<LoginModalProps> = ({
 
         <div className="space-y-4 mt-4">
           <div className="flex justify-between items-center">
-            {/* <div>
-              <Button icon={<FacebookOutlined />} className="mr-2" />
-              <Button icon={<GoogleOutlined />} />
-            </div> */}
             <div>
               <Button
                 type="primary"

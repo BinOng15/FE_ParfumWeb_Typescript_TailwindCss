@@ -1,449 +1,345 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
-import { DeleteFilled } from "@ant-design/icons";
-//import { useSelector } from "react-redux";
-import { CartProduct } from "../../redux/cartSlice";
-//import { Pagination } from "antd";
+import { message, Spin, Button, Modal, notification } from "antd";
+import { useSelector } from "react-redux";
+import { DeleteOutlined } from "@ant-design/icons";
+import orderService from "../../services/orderService";
+import { GetAllOrderRequest, OrderResponse } from "../../components/models/Order";
+import { axiosInstance } from "../../services/axiosInstance";
+import { AxiosResponse } from "axios";
+import { useNavigate } from "react-router-dom";
 
-// Fake danh sách sản phẩm
-// const fakeProducts = Array(100)
-//   .fill(null)
-//   .map((_, index) => ({
-//     id: index + 1,
-//     name: `Nước hoa ${index + 1}`,
-//     description: "Hương thơm sang trọng, lưu hương lâu.",
-//     img: "https://insacmau.com/wp-content/uploads/2023/08/hop-dung-nuoc-hoa-chiet-9-1200x900.jpg",
-//     price: `${((index % 5) + 1) * 500}.000 VNĐ`,
-//     oldPrice: index % 3 === 0 ? `${((index % 5) + 1) * 600}.000 VNĐ` : null, // Random giá cũ
-//     rating: Math.floor(Math.random() * 5) + 1, // Random từ 1-5 sao
-//     discount: index % 2 === 0 ? "-15%" : "-10%", // Random giảm giá
-//     size: ["30ML", "50ML", "100ML"],
-//   }));
+interface OrderDetailResponse {
+  orderDetailId: number;
+  orderId: number;
+  productId: number;
+  productName: string | null;
+  quantity: number;
+  unitPrice: number;
+}
 
-const customScrollbarStyles = `
-    /* Custom scrollbar styles */
-    .inline-scrollbar::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-    
-    .inline-scrollbar::-webkit-scrollbar-track {
-      background: #f1f1f1;
-      border-radius: 4px;
-    }
-    
-    .inline-scrollbar::-webkit-scrollbar-thumb {
-      background: rgba(255, 96, 121, 0.7);
-      border-radius: 4px;
-    }
-    
-    .inline-scrollbar::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 96, 121, 0.9);
-    }
-    `;
+interface ProductResponse {
+  productId: number;
+  name: string;
+  brand: string;
+  price: number;
+  stock: number;
+  description: string;
+  imageUrl: string;
+  createdAt: Date;
+  updatedAt: Date;
+  isDeleted: boolean;
+}
+
+interface CartItem {
+  orderDetail: OrderDetailResponse;
+  product: ProductResponse;
+}
+
+interface BaseResponse<T> {
+  data: T;
+  status: number;
+  message: string;
+}
+
+const getProductById = async (productId: number): Promise<BaseResponse<ProductResponse>> => {
+  try {
+    const response = await axiosInstance.get(`/product/getproductbyid?id=${productId}`);
+    console.log(`getProductById response for productId ${productId}:`, response.data);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching product by ID ${productId}:`, error);
+    throw error;
+  }
+};
+
+const deleteOrderDetail = async (
+  orderDetailId: number
+): Promise<BaseResponse<OrderResponse>> => {
+  try {
+    const response: AxiosResponse<BaseResponse<OrderResponse>> =
+      await axiosInstance.delete(`/order/delete-order-detail/${orderDetailId}`);
+    console.log(`deleteOrderDetail response for orderDetailId ${orderDetailId}:`, response.data);
+    return response.data;
+  } catch (error) {
+    console.error(`Error deleting order detail ${orderDetailId}:`, error);
+    throw error;
+  }
+};
 
 const Cart: React.FC = () => {
-  //const { products } = useSelector((state: any) => state.cart);
-  const [productsSelected] = useState<CartProduct[]>([]);
-  // const dispatch = useDispatch();
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [cart, setCart] = useState<OrderResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const { isAuthenticated, user } = useSelector((state: any) => state.auth);
+  const customerId = user?.customerId;
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const styleSheet = document.createElement("style");
-    styleSheet.textContent = customScrollbarStyles;
-    document.head.appendChild(styleSheet);
-    console.log(productsSelected);
+    console.log("Auth state in Cart:", { isAuthenticated, customerId });
 
-  }, [productsSelected]);
+    if (!isAuthenticated || !customerId) {
+      console.log("Authentication failed: Redirecting to login...");
+      message.error("Vui lòng đăng nhập để xem giỏ hàng!");
+      navigate("/login");
+      return;
+    }
 
-  // Function to handle checkbox changes
-  // const handleCheckboxChange = (product: CartProduct, isChecked: boolean) => {
-  //   if (isChecked) {
-  //     // Add the product to the selected list
-  //     setProductsSelected((prevSelected) => [...prevSelected, product]);
-  //   } else {
-  //     // Remove the product from the selected list
-  //     setProductsSelected((prevSelected) =>
-  //       prevSelected.filter((p) => p.productId !== product.productId)
-  //     );
-  //   }
-  // };
+    const fetchCart = async () => {
+      setLoading(true);
+      try {
+        const data: GetAllOrderRequest = {
+          pageNum: 1,
+          pageSize: 10,
+        };
+        console.log("Sending getAllOrders request with payload:", data);
+        const response = await orderService.getAllOrders(data);
+        console.log("getAllOrders response:", response);
 
-  // // Function to handle checkbox select all
-  // const handleCheckboxSelectAll = () => {
-  //   if (productsSelected.length != products.length) {
-  //     // Add all the product to the selected list
-  //     setProductsSelected([...products]);
-  //   } else {
-  //     // Remove all the product from the selected list
-  //     setProductsSelected([]);
-  //   }
-  // };
+        const cartOrder = response.pageData?.find(
+          (order: OrderResponse) =>
+            order.status === "Cart" && order.customerId === customerId
+        );
+        console.log("Filtered cart order:", cartOrder);
+
+        if (cartOrder) {
+          setCart(cartOrder);
+          if (cartOrder.orderDetails) {
+            const productIds = cartOrder.orderDetails.map((detail) => detail.productId);
+            console.log("Product IDs to fetch:", productIds);
+            const productPromises = productIds.map((id) => getProductById(id));
+            const productsResponse = await Promise.all(productPromises);
+            const products = productsResponse.map((res) => res.data);
+
+            const cartItems = cartOrder.orderDetails.map((detail) => {
+              const product = products.find((p) => p.productId === detail.productId);
+              return {
+                orderDetail: detail,
+                product: product || {
+                  productId: detail.productId,
+                  name: "Không có thông tin",
+                  brand: "",
+                  imageUrl: "",
+                  price: detail.unitPrice,
+                  stock: 0,
+                  description: "",
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                  isDeleted: false,
+                },
+              };
+            });
+            console.log("Cart items after combining:", cartItems);
+            setCartItems(cartItems);
+          } else {
+            setCartItems([]);
+          }
+        } else {
+          console.log("No cart order found for customerId:", customerId);
+          setCart(null);
+          setCartItems([]);
+        }
+      } catch (error) {
+        console.error("Error fetching cart:", error);
+        message.error("Lỗi khi tải giỏ hàng!");
+        setCart(null);
+        setCartItems([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCart();
+  }, [isAuthenticated, customerId, navigate]);
+
+  const handleDeleteCart = () => {
+    if (!cart) {
+      message.warning("Giỏ hàng trống, không có gì để xóa!");
+      return;
+    }
+
+    Modal.confirm({
+      title: "Xác nhận xóa",
+      content: `Bạn có chắc chắn muốn xóa toàn bộ giỏ hàng?`,
+      okText: "Xóa",
+      okType: "danger",
+      cancelText: "Hủy",
+      onOk: async () => {
+        try {
+          const response = await orderService.deleteOrder(cart.orderId, true);
+          console.log("Delete cart response:", response);
+
+          if (response.status === 200) {
+            notification.success({
+              message: "Thành công",
+              description: "Xóa toàn bộ giỏ hàng thành công!",
+            });
+            setCart(null);
+            setCartItems([]);
+          } else {
+            throw new Error(response.Message || "Không thể xóa giỏ hàng!");
+          }
+        } catch (error: any) {
+          console.error("Error deleting cart:", error);
+          notification.error({
+            message: "Lỗi",
+            description: error.message || "Không thể xóa giỏ hàng!",
+          });
+        }
+      },
+    });
+  };
+
+  const handleDeleteOrderDetail = (orderDetail: OrderDetailResponse) => {
+    Modal.confirm({
+      title: "Xác nhận xóa",
+      content: `Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?`,
+      okText: "Xóa",
+      okType: "danger",
+      cancelText: "Hủy",
+      onOk: async () => {
+        try {
+          const response = await deleteOrderDetail(orderDetail.orderDetailId);
+          if (response.status === 200) {
+            notification.success({
+              message: "Thành công",
+              description: "Xóa sản phẩm khỏi giỏ hàng thành công!",
+            });
+
+            const data: GetAllOrderRequest = {
+              pageNum: 1,
+              pageSize: 10,
+            };
+            const updatedResponse = await orderService.getAllOrders(data);
+            const updatedCartOrder = updatedResponse.pageData?.find(
+              (order: OrderResponse) =>
+                order.status === "Cart" && order.customerId === customerId
+            );
+            console.log("Updated cart order after delete:", updatedCartOrder);
+
+            if (updatedCartOrder && updatedCartOrder.orderDetails) {
+              const productIds = updatedCartOrder.orderDetails.map((detail) => detail.productId);
+              const productPromises = productIds.map((id) => getProductById(id));
+              const productsResponse = await Promise.all(productPromises);
+              const products = productsResponse.map((res) => res.data);
+
+              const updatedCartItems = updatedCartOrder.orderDetails.map((detail) => {
+                const product = products.find((p) => p.productId === detail.productId);
+                return {
+                  orderDetail: detail,
+                  product: product || {
+                    productId: detail.productId,
+                    name: "Không có thông tin",
+                    brand: "",
+                    imageUrl: "",
+                    price: detail.unitPrice,
+                    stock: 0,
+                    description: "",
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    isDeleted: false,
+                  },
+                };
+              });
+              setCart(updatedCartOrder);
+              setCartItems(updatedCartItems);
+            } else {
+              setCart(null);
+              setCartItems([]);
+            }
+          } else {
+            throw new Error(response.message || "Không thể xóa sản phẩm!");
+          }
+        } catch (error: any) {
+          console.error("Error deleting order detail:", error);
+          notification.error({
+            message: "Lỗi",
+            description: error.message || "Không thể xóa sản phẩm khỏi giỏ hàng!",
+          });
+        }
+      },
+    });
+  };
+
+  const calculateTotal = () => {
+    const total = cartItems.reduce(
+      (total, item) => total + item.orderDetail.quantity * item.orderDetail.unitPrice,
+      0
+    );
+    console.log("Calculated total:", total);
+    return total;
+  };
+
+  if (!isAuthenticated || !customerId) {
+    return <div className="text-center text-lg">Vui lòng đăng nhập để xem giỏ hàng!</div>;
+  }
+
+  if (loading) {
+    return <Spin className="flex justify-center items-center h-64" />;
+  }
 
   return (
-
-    <div className="p-6 bg-white">
-      {/* Tiêu đề trang */}
-      <header className="w-full p-4 text-center">
-        <h1 className="text-3xl font-[500]">Giỏ hàng</h1>
-      </header>
-      <div className="w-[8%] ml-auto mt-6 pb-6 ">
-        <button
-          className="w-full bg-[rgba(255,96,121,0.7)] text-white font-bold py-3 rounded-lg hover:bg-[rgba(255,96,121,0.9)] transition-colors duration-300"
-        >
-          Chọn tất cả
-        </button>
-      </div>
-      {/* Danh mục giỏ hàng */}
-      <div
-        className="overflow-x-auto overflow-y-scroll border p-6 border-gray-200 rounded-lg shadow inline-scrollbar"
-        style={{ maxHeight: "650px" }}
-      >
-        <div className="grid grid-flow grid-rows-1 gap-1">
-          <div className="group relative w-full p-6 bg-white border border-gray-200 rounded-lg shadow flex items-center border-b justify-between transition-colors overflow-hidden">
-            {/* Cột trái: Thông tin sản phẩm */}
-            <div className="flex items-center space-x-4">
-              <input
-                type="checkbox"
-                className="mr-2 w-5 h-5 cursor-pointer"
-              />
-              {/* Ảnh sản phẩm */}
-              <img
-                src="https://s3-alpha-sig.figma.com/img/b42e/d042/90c7242704c7a44daa1256b01285b8d1?Expires=1740355200&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=nXaOP4uBB124rwraCk4u0rTxtol7r6ZGjejZc39XocgTdmZJcXtkXIi5dbzW60H1UayVV~EyFgavdmVoirHVN8WNisbkOOdWauqvEHI49WnvdeLktZrsA69ko4ITu5ywzuhoZXCIGHPBJgxO59H8ZxEKR~30Xt9eYVzc-UsQBR-ONUOT8RFAoOlSGok1WEiznaK3hbccqgHpG8XCZ-1Azv7gj~8l-jEUW8krqImxaYrBX9GBdm4TtYhQE-BXriXHevyCJ~lYA0890yLgPgCUDbzHjkPXhhB54nEyZBP5RbFjoJl2BptIt3eRd3WcZOQHzKP2ELf2WsTdE9wmEh5pdQ__"
-                alt="Product Image"
-                className="w-40 h-40 rounded-lg"
-              />
-
-              {/* Chi tiết sản phẩm */}
-              <div>
-                <p className="font-bold text-lg">
-                  No5 Chanel Paris (Chai 10ml)
+    <div className="p-6 max-w-7xl mx-auto">
+      <h1 className="text-3xl font-bold mb-6">Giỏ hàng</h1>
+      {cartItems.length > 0 ? (
+        <div>
+          <div className="grid grid-cols-1 gap-6">
+            {cartItems.map((item) => (
+              <div
+                key={item.orderDetail.orderDetailId}
+                className="border rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow bg-white flex flex-col"
+              >
+                <div className="flex items-center mb-4">
+                  <img
+                    src={item.product.imageUrl}
+                    alt={item.product.name}
+                    className="w-20 h-20 object-cover rounded mr-4"
+                  />
+                  <div>
+                    <h2 className="text-lg font-semibold">{item.product.name}</h2>
+                    <p className="text-gray-600">Thương hiệu: {item.product.brand}</p>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center mb-2">
+                  <p className="text-gray-700">Số lượng: {item.orderDetail.quantity}</p>
+                  <p className="text-gray-700">
+                    Đơn giá: {item.orderDetail.unitPrice.toLocaleString()} VNĐ
+                  </p>
+                </div>
+                <p className="text-lg font-bold mb-4">
+                  Thành tiền: {(item.orderDetail.quantity * item.orderDetail.unitPrice).toLocaleString()} VNĐ
                 </p>
-                <p className="font-semibold text-gray-500  pt-0 px-1 pb-10 text-lg">
-                  Pink
-                </p>
-                <p
-                  className="font-semibold text-lg"
-                  style={{ color: "rgba(255, 96, 121, 0.7)" }}
-                >
-                  159,000 VND
-                </p>
-              </div>
-            </div>
-            {/* Cột phải: Quản lý số lượng và sản phẩm */}
-            <div className="absolute  right-12 top-1/2 transform -translate-y-1/2 text-white px-4 py-2 rounded-lg space-x-4 group-hover:right-56 transition-all duration-300 ease-in-out">
-              {/* Quản lý số lượng */}
-              <div className="text-lg flex items-center">
                 <button
-                  className="font-bold bg-gray-200 text-gray-700 px-3 py-1 rounded-l"
-                  style={{ color: "rgba(255, 96, 121, 0.7)" }}
+                  onClick={() => handleDeleteOrderDetail(item.orderDetail)}
+                  className="self-end text-red-500 hover:text-red-700 transition-colors"
+                  title="Xóa sản phẩm"
                 >
-                  -
-                </button>
-                <span className="font-bold bg-gray-100 text-gray-700 px-4 py-1">
-                  1
-                </span>
-                <button
-                  className="font-bold px-3 py-1 rounded-r "
-                  style={{ backgroundColor: "rgba(255, 96, 121, 0.7)" }}
-                >
-                  +
+                  <DeleteOutlined className="text-lg" />
                 </button>
               </div>
-            </div>
-            {/* Xoá sản phẩm (Mặc định ẩn, chỉ hiển thị khi hover) */}
-            <button
-              className="absolute h-full -right-20 top-1/2 transform -translate-y-1/2 px-12 py-2 opacity-0 group-hover:opacity-100 group-hover:right-0 transition-all duration-300 ease-in-out"
-              style={{ backgroundColor: "#C4C4C4", color: "#E71717" }}
-            >
-              <DeleteFilled className="cursor-pointer text-4xl" />
-            </button>
+            ))}
           </div>
-          <div className="group relative w-full p-6 bg-white border border-gray-200 rounded-lg shadow flex items-center border-b border-gray-200 justify-between transition-colors overflow-hidden">
-            <div className="flex items-center space-x-4">
-              <img
-                src="https://s3-alpha-sig.figma.com/img/b42e/d042/90c7242704c7a44daa1256b01285b8d1?Expires=1740355200&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=nXaOP4uBB124rwraCk4u0rTxtol7r6ZGjejZc39XocgTdmZJcXtkXIi5dbzW60H1UayVV~EyFgavdmVoirHVN8WNisbkOOdWauqvEHI49WnvdeLktZrsA69ko4ITu5ywzuhoZXCIGHPBJgxO59H8ZxEKR~30Xt9eYVzc-UsQBR-ONUOT8RFAoOlSGok1WEiznaK3hbccqgHpG8XCZ-1Azv7gj~8l-jEUW8krqImxaYrBX9GBdm4TtYhQE-BXriXHevyCJ~lYA0890yLgPgCUDbzHjkPXhhB54nEyZBP5RbFjoJl2BptIt3eRd3WcZOQHzKP2ELf2WsTdE9wmEh5pdQ__"
-                alt="Product Image"
-                className="w-40 h-40 rounded-lg"
-              />
-              <div>
-                <p className="font-bold text-lg">
-                  Nước Hoa Jean Paul Gaultier Scandal EDP 30ML
-                </p>
-                <p className="font-semibold text-gray-500  pt-0 px-1 pb-10 text-lg">
-                  01 Blossom Forest
-                </p>
-                <p
-                  className="font-semibold text-lg"
-                  style={{ color: "rgba(255, 96, 121, 0.7)" }}
-                >
-                  889,000 VND
-                </p>
-              </div>
-            </div>
-            <div className="absolute  right-12 top-1/2 transform -translate-y-1/2 text-white px-4 py-2 rounded-lg space-x-4 group-hover:right-56 transition-all duration-300 ease-in-out">
-              <div className="text-lg flex items-center">
-                <button
-                  className="font-bold bg-gray-200 text-gray-700 px-3 py-1 rounded-l"
-                  style={{ color: "rgba(255, 96, 121, 0.7)" }}
-                >
-                  -
-                </button>
-                <span className="font-bold bg-gray-100 text-gray-700 px-4 py-1">
-                  1
-                </span>
-                <button
-                  className="font-bold px-3 py-1 rounded-r "
-                  style={{ backgroundColor: "rgba(255, 96, 121, 0.7)" }}
-                >
-                  +
-                </button>
-              </div>
-            </div>
-            <button
-              className="absolute h-full -right-20 top-1/2 transform -translate-y-1/2 px-12 py-2 opacity-0 group-hover:opacity-100 group-hover:right-0 transition-all duration-300 ease-in-out"
-              style={{ backgroundColor: "#C4C4C4", color: "#E71717" }}
+          <div className="mt-8 flex flex-col items-end">
+            <Button
+              type="default"
+              danger
+              onClick={handleDeleteCart}
+              className="mb-4"
             >
-              <DeleteFilled className="cursor-pointer text-4xl" />
-            </button>
-          </div>
-          <div className="group relative w-full p-6 bg-white border border-gray-200 rounded-lg shadow flex items-center border-b border-gray-200 justify-between transition-colors overflow-hidden">
-            <div className="flex items-center space-x-4">
-              <img
-                src="https://s3-alpha-sig.figma.com/img/b42e/d042/90c7242704c7a44daa1256b01285b8d1?Expires=1740355200&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=nXaOP4uBB124rwraCk4u0rTxtol7r6ZGjejZc39XocgTdmZJcXtkXIi5dbzW60H1UayVV~EyFgavdmVoirHVN8WNisbkOOdWauqvEHI49WnvdeLktZrsA69ko4ITu5ywzuhoZXCIGHPBJgxO59H8ZxEKR~30Xt9eYVzc-UsQBR-ONUOT8RFAoOlSGok1WEiznaK3hbccqgHpG8XCZ-1Azv7gj~8l-jEUW8krqImxaYrBX9GBdm4TtYhQE-BXriXHevyCJ~lYA0890yLgPgCUDbzHjkPXhhB54nEyZBP5RbFjoJl2BptIt3eRd3WcZOQHzKP2ELf2WsTdE9wmEh5pdQ__"
-                alt="Product Image"
-                className="w-40 h-40 rounded-lg"
-              />
-              <div>
-                <p className="font-bold text-lg">
-                  Nước Hoa Jean Paul Gaultier Scandal EDP 30ML
-                </p>
-                <p className="font-semibold text-gray-500  pt-0 px-1 pb-10 text-lg">
-                  01 Blossom Forest
-                </p>
-                <p
-                  className="font-semibold text-lg"
-                  style={{ color: "rgba(255, 96, 121, 0.7)" }}
-                >
-                  889,000 VND
-                </p>
-              </div>
-            </div>
-            <div className="absolute  right-12 top-1/2 transform -translate-y-1/2 text-white px-4 py-2 rounded-lg space-x-4 group-hover:right-56 transition-all duration-300 ease-in-out">
-              <div className="text-lg flex items-center">
-                <button
-                  className="font-bold bg-gray-200 text-gray-700 px-3 py-1 rounded-l"
-                  style={{ color: "rgba(255, 96, 121, 0.7)" }}
-                >
-                  -
-                </button>
-                <span className="font-bold bg-gray-100 text-gray-700 px-4 py-1">
-                  1
-                </span>
-                <button
-                  className="font-bold px-3 py-1 rounded-r "
-                  style={{ backgroundColor: "rgba(255, 96, 121, 0.7)" }}
-                >
-                  +
-                </button>
-              </div>
-            </div>
-            <button
-              className="absolute h-full -right-20 top-1/2 transform -translate-y-1/2 px-12 py-2 opacity-0 group-hover:opacity-100 group-hover:right-0 transition-all duration-300 ease-in-out"
-              style={{ backgroundColor: "#C4C4C4", color: "#E71717" }}
-            >
-              <DeleteFilled className="cursor-pointer text-4xl" />
-            </button>
-          </div>
-          <div className="group relative w-full p-6 bg-white border border-gray-200 rounded-lg shadow flex items-center border-b border-gray-200 justify-between transition-colors overflow-hidden">
-            <div className="flex items-center space-x-4">
-              <img
-                src="https://s3-alpha-sig.figma.com/img/b42e/d042/90c7242704c7a44daa1256b01285b8d1?Expires=1740355200&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=nXaOP4uBB124rwraCk4u0rTxtol7r6ZGjejZc39XocgTdmZJcXtkXIi5dbzW60H1UayVV~EyFgavdmVoirHVN8WNisbkOOdWauqvEHI49WnvdeLktZrsA69ko4ITu5ywzuhoZXCIGHPBJgxO59H8ZxEKR~30Xt9eYVzc-UsQBR-ONUOT8RFAoOlSGok1WEiznaK3hbccqgHpG8XCZ-1Azv7gj~8l-jEUW8krqImxaYrBX9GBdm4TtYhQE-BXriXHevyCJ~lYA0890yLgPgCUDbzHjkPXhhB54nEyZBP5RbFjoJl2BptIt3eRd3WcZOQHzKP2ELf2WsTdE9wmEh5pdQ__"
-                alt="Product Image"
-                className="w-40 h-40 rounded-lg"
-              />
-              <div>
-                <p className="font-bold text-lg">
-                  Nước Hoa Jean Paul Gaultier Scandal EDP 30ML
-                </p>
-                <p className="font-semibold text-gray-500  pt-0 px-1 pb-10 text-lg">
-                  01 Blossom Forest
-                </p>
-                <p
-                  className="font-semibold text-lg"
-                  style={{ color: "rgba(255, 96, 121, 0.7)" }}
-                >
-                  889,000 VND
-                </p>
-              </div>
-            </div>
-            <div className="absolute  right-12 top-1/2 transform -translate-y-1/2 text-white px-4 py-2 rounded-lg space-x-4 group-hover:right-56 transition-all duration-300 ease-in-out">
-              <div className="text-lg flex items-center">
-                <button
-                  className="font-bold bg-gray-200 text-gray-700 px-3 py-1 rounded-l"
-                  style={{ color: "rgba(255, 96, 121, 0.7)" }}
-                >
-                  -
-                </button>
-                <span className="font-bold bg-gray-100 text-gray-700 px-4 py-1">
-                  1
-                </span>
-                <button
-                  className="font-bold px-3 py-1 rounded-r "
-                  style={{ backgroundColor: "rgba(255, 96, 121, 0.7)" }}
-                >
-                  +
-                </button>
-              </div>
-            </div>
-            <button
-              className="absolute h-full -right-20 top-1/2 transform -translate-y-1/2 px-12 py-2 opacity-0 group-hover:opacity-100 group-hover:right-0 transition-all duration-300 ease-in-out"
-              style={{ backgroundColor: "#C4C4C4", color: "#E71717" }}
-            >
-              <DeleteFilled className="cursor-pointer text-4xl" />
-            </button>
-          </div>
-          <div className="group relative w-full p-6 bg-white border border-gray-200 rounded-lg shadow flex items-center border-b border-gray-200 justify-between transition-colors overflow-hidden">
-            <div className="flex items-center space-x-4">
-              <img
-                src="https://s3-alpha-sig.figma.com/img/b42e/d042/90c7242704c7a44daa1256b01285b8d1?Expires=1740355200&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=nXaOP4uBB124rwraCk4u0rTxtol7r6ZGjejZc39XocgTdmZJcXtkXIi5dbzW60H1UayVV~EyFgavdmVoirHVN8WNisbkOOdWauqvEHI49WnvdeLktZrsA69ko4ITu5ywzuhoZXCIGHPBJgxO59H8ZxEKR~30Xt9eYVzc-UsQBR-ONUOT8RFAoOlSGok1WEiznaK3hbccqgHpG8XCZ-1Azv7gj~8l-jEUW8krqImxaYrBX9GBdm4TtYhQE-BXriXHevyCJ~lYA0890yLgPgCUDbzHjkPXhhB54nEyZBP5RbFjoJl2BptIt3eRd3WcZOQHzKP2ELf2WsTdE9wmEh5pdQ__"
-                alt="Product Image"
-                className="w-40 h-40 rounded-lg"
-              />
-              <div>
-                <p className="font-bold text-lg">
-                  Nước Hoa Jean Paul Gaultier Scandal EDP 30ML
-                </p>
-                <p className="font-semibold text-gray-500  pt-0 px-1 pb-10 text-lg">
-                  01 Blossom Forest
-                </p>
-                <p
-                  className="font-semibold text-lg"
-                  style={{ color: "rgba(255, 96, 121, 0.7)" }}
-                >
-                  889,000 VND
-                </p>
-              </div>
-            </div>
-            <div className="absolute  right-12 top-1/2 transform -translate-y-1/2 text-white px-4 py-2 rounded-lg space-x-4 group-hover:right-56 transition-all duration-300 ease-in-out">
-              <div className="text-lg flex items-center">
-                <button
-                  className="font-bold bg-gray-200 text-gray-700 px-3 py-1 rounded-l"
-                  style={{ color: "rgba(255, 96, 121, 0.7)" }}
-                >
-                  -
-                </button>
-                <span className="font-bold bg-gray-100 text-gray-700 px-4 py-1">
-                  1
-                </span>
-                <button
-                  className="font-bold px-3 py-1 rounded-r "
-                  style={{ backgroundColor: "rgba(255, 96, 121, 0.7)" }}
-                >
-                  +
-                </button>
-              </div>
-            </div>
-            <button
-              className="absolute h-full -right-20 top-1/2 transform -translate-y-1/2 px-12 py-2 opacity-0 group-hover:opacity-100 group-hover:right-0 transition-all duration-300 ease-in-out"
-              style={{ backgroundColor: "#C4C4C4", color: "#E71717" }}
-            >
-              <DeleteFilled className="cursor-pointer text-4xl" />
-            </button>
-          </div>
-          <div className="group relative w-full p-6 bg-white border border-gray-200 rounded-lg shadow flex items-center border-b border-gray-200 justify-between transition-colors overflow-hidden">
-            <div className="flex items-center space-x-4">
-              <img
-                src="https://s3-alpha-sig.figma.com/img/b42e/d042/90c7242704c7a44daa1256b01285b8d1?Expires=1740355200&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=nXaOP4uBB124rwraCk4u0rTxtol7r6ZGjejZc39XocgTdmZJcXtkXIi5dbzW60H1UayVV~EyFgavdmVoirHVN8WNisbkOOdWauqvEHI49WnvdeLktZrsA69ko4ITu5ywzuhoZXCIGHPBJgxO59H8ZxEKR~30Xt9eYVzc-UsQBR-ONUOT8RFAoOlSGok1WEiznaK3hbccqgHpG8XCZ-1Azv7gj~8l-jEUW8krqImxaYrBX9GBdm4TtYhQE-BXriXHevyCJ~lYA0890yLgPgCUDbzHjkPXhhB54nEyZBP5RbFjoJl2BptIt3eRd3WcZOQHzKP2ELf2WsTdE9wmEh5pdQ__"
-                alt="Product Image"
-                className="w-40 h-40 rounded-lg"
-              />
-              <div>
-                <p className="font-bold text-lg">
-                  Nước Hoa Jean Paul Gaultier Scandal EDP 30ML
-                </p>
-                <p className="font-semibold text-gray-500  pt-0 px-1 pb-10 text-lg">
-                  01 Blossom Forest
-                </p>
-                <p
-                  className="font-semibold text-lg"
-                  style={{ color: "rgba(255, 96, 121, 0.7)" }}
-                >
-                  889,000 VND
-                </p>
-              </div>
-            </div>
-            <div className="absolute  right-12 top-1/2 transform -translate-y-1/2 text-white px-4 py-2 rounded-lg space-x-4 group-hover:right-56 transition-all duration-300 ease-in-out">
-              <div className="text-lg flex items-center">
-                <button
-                  className="font-bold bg-gray-200 text-gray-700 px-3 py-1 rounded-l"
-                  style={{ color: "rgba(255, 96, 121, 0.7)" }}
-                >
-                  -
-                </button>
-                <span className="font-bold bg-gray-100 text-gray-700 px-4 py-1">
-                  1
-                </span>
-                <button
-                  className="font-bold px-3 py-1 rounded-r "
-                  style={{ backgroundColor: "rgba(255, 96, 121, 0.7)" }}
-                >
-                  +
-                </button>
-              </div>
-            </div>
-            <button
-              className="absolute h-full -right-20 top-1/2 transform -translate-y-1/2 px-12 py-2 opacity-0 group-hover:opacity-100 group-hover:right-0 transition-all duration-300 ease-in-out"
-              style={{ backgroundColor: "#C4C4C4", color: "#E71717" }}
-            >
-              <DeleteFilled className="cursor-pointer text-4xl" />
-            </button>
+              Xóa toàn bộ giỏ hàng
+            </Button>
+            <p className="text-xl font-bold mb-4">
+              Tổng tiền: {calculateTotal().toLocaleString()} VNĐ
+            </p>
+            <Button type="primary" size="large">
+              Thanh toán
+            </Button>
           </div>
         </div>
-      </div>
-
-      {/* Phân trang */}
-      {/* <div className="flex justify-center mt-6">
-        <Pagination
-          current={currentPage}
-          total={fakeProducts.length}
-          pageSize={itemsPerPage}
-          onChange={(page) => setCurrentPage(page)}
-        />
-      </div> */}
-      <div className="w-[60%] ml-auto mt-6 p-6 bg-white border border-gray-200 rounded-lg shadow">
-        {/* Mã giảm giá */}
-        <div className="flex items-center mb-6">
-          <img
-            src="https://s3-alpha-sig.figma.com/img/e1bd/45d9/cb6fa9f62566eade09560369b67ddc0b?Expires=1740355200&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=c4ylfaipA60VFhpSyoPPehAv~fo~y~uV8t9axZCqzL5doiNhxnmwsEeNMkUrn2CRVTqTdETJ1nZHrBzJqsTT-8EcB5-ZLeonmYA7Vr7rBnyz2oD~rwBciJCm6CvQq7F~4~lgCqDxj5wsXtl1OTCf2RgQdyITPTPn4NcyzsuIwcTiAo3dDCSOicGIyq10jyICOKlCpIdpgOcIfP~Tp0Yy2bBxkC3-LYyGcm9PWBnxSUpU8AXVaEZXa6c2rp9EvJRJn6CnulCiyXnNWfV9xdECHp3t9T1u~FVvghOVWZGzpW2T~qqr8FrNsCmzcfr94XKd6rrQe7s4HqWl2e0ukmjO4g__"
-            alt="Discount Icon"
-            className="w-6 h-6 mr-2"
-          />
-          <input
-            type="text"
-            placeholder="Mã giảm giá"
-            className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[rgba(255,96,121,0.7)]"
-          />
-        </div>
-        <div className="flex justify-between items-center mb-4">
-          <span className="font-semibold text-lg">Số lượng(3)</span>
-          <span className="font-semibold text-lg">1,048,000 VND</span>
-        </div>
-        <div className="flex justify-between items-center mb-4">
-          <span className="font-semibold text-lg">Giảm giá</span>
-          <span className="font-semibold text-lg">100,000 VND</span>
-        </div>
-        <div className="flex justify-between items-center mb-6">
-          <span className="font-semibold text-lg">Tổng tiền</span>
-          <span className="font-semibold text-lg" style={{ color: "rgba(255, 96, 121, 0.7)" }}>948,000 VND</span>
-        </div>
-        <button
-          className="w-full bg-[rgba(255,96,121,0.7)] text-white font-bold py-3 rounded-lg hover:bg-[rgba(255,96,121,0.9)] transition-colors duration-300"
-        >
-          THANH TOÁN
-        </button>
-      </div>
+      ) : (
+        <p className="text-center text-lg">Giỏ hàng của bạn trống!</p>
+      )}
     </div>
-
   );
 };
 

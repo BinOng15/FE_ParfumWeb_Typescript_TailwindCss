@@ -1,12 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from "react";
-import {
-  MinusOutlined,
-  PlusOutlined,
-  ShoppingCartOutlined,
-} from "@ant-design/icons";
-
-import { Pagination } from "antd";
+import { MinusOutlined, PlusOutlined, ShoppingCartOutlined } from "@ant-design/icons";
+import { Pagination, message } from "antd";
+import { useSelector } from "react-redux";
 import { axiosInstance } from "../../services/axiosInstance";
+import { AxiosResponse } from "axios";
 
 interface ProductResponse {
   productId: number;
@@ -27,14 +25,62 @@ interface BaseResponse<T> {
   message: string;
 }
 
-const getProductById = async (
-  productId: number
-): Promise<BaseResponse<ProductResponse>> => {
+interface OrderResponse {
+  orderId: number;
+  customerId: number;
+  totalAmount: number;
+  orderDate: string;
+  status: string;
+  isDeleted: boolean;
+  orderDetails: OrderDetailResponse[];
+}
+
+interface OrderDetailResponse {
+  orderDetailId: number;
+  orderId: number;
+  productId: number;
+  productName: string | null;
+  quantity: number;
+  unitPrice: number;
+}
+
+interface AddToCartRequest {
+  customerId: number;
+  products: ProductForOrder[];
+}
+
+interface ProductForOrder {
+  productId: number;
+  quantity: number;
+  price: number;
+}
+
+const getProductById = async (productId: number): Promise<BaseResponse<ProductResponse>> => {
   try {
     const response = await axiosInstance.get(`/product/getproductbyid?id=${productId}`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching product by ID ${productId}:`, error);
+    throw error;
+  }
+};
+
+const addToCart = async (data: AddToCartRequest): Promise<BaseResponse<OrderResponse>> => {
+  try {
+    console.log("Sending addToCart request with payload:", data); // Debug payload
+    const response: AxiosResponse<BaseResponse<OrderResponse>> = await axiosInstance.post(
+      "/order/add-to-cart",
+      data,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    console.log("addToCart response:", response.data); // Debug response
+    return response.data;
+  } catch (error: any) {
+    console.error("Error adding to cart:", error.response?.data || error.message); // Debug error
     throw error;
   }
 };
@@ -46,6 +92,9 @@ const PerfumeProductDetail: React.FC<{ productId: number }> = ({ productId }) =>
   const reviewsPerPage = 5;
   const [product, setProduct] = useState<ProductResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const { isAuthenticated, user } = useSelector((state: any) => state.auth);
+  const customerId = user?.customerId;
+  const roleName = user?.roleName;
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -53,17 +102,51 @@ const PerfumeProductDetail: React.FC<{ productId: number }> = ({ productId }) =>
         setLoading(true);
         const response = await getProductById(productId);
         setProduct(response.data);
-        console.log(response.data)
       } catch (error) {
         console.error("Failed to fetch product:", error);
       } finally {
         setLoading(false);
       }
-
     };
 
     fetchProduct();
   }, [productId]);
+
+  const handleAddToCart = async () => {
+    console.log("Auth state:", { isAuthenticated, customerId, roleName }); // Debug Redux state
+
+    if (!isAuthenticated || !customerId) {
+      message.error("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!");
+      return;
+    }
+
+    if (!product) {
+      message.error("Không thể lấy thông tin sản phẩm!");
+      return;
+    }
+
+    try {
+      const request: AddToCartRequest = {
+        customerId,
+        products: [
+          {
+            productId: product.productId,
+            quantity,
+            price: product.price,
+          },
+        ],
+      };
+
+      const response = await addToCart(request);
+      if (response.status === 200) {
+        message.success("Thêm vào giỏ hàng thành công!");
+      } else {
+        message.error(response.message || "Không thể thêm vào giỏ hàng!");
+      }
+    } catch (error: any) {
+      message.error(error.response?.data?.message || "Lỗi khi thêm sản phẩm vào giỏ hàng!");
+    }
+  };
 
   const commitments = [
     {
@@ -97,15 +180,13 @@ const PerfumeProductDetail: React.FC<{ productId: number }> = ({ productId }) =>
   }
 
   return (
-
     <div className="ml-10 mr-10">
       <div className="p-8 bg-white">
         {/* Đường dẫn trang */}
         <div className="text-sm text-gray-500 mb-4">
-          <span className="hover:text-black cursor-pointer">Trang chủ</span>{" "}  –
-          <span className="hover:text-black cursor-pointer">Nước Hoa</span>{" "}  –
-          <span className="hover:text-black cursor-pointer">Thương hiệu nước hoa</span>{" "}  –
-
+          <span className="hover:text-black cursor-pointer">Trang chủ</span> –{" "}
+          <span className="hover:text-black cursor-pointer">Nước Hoa</span> –{" "}
+          <span className="hover:text-black cursor-pointer">Thương hiệu nước hoa</span> –{" "}
           <span className="text-black font-bold">{product.name}</span>
         </div>
 
@@ -113,17 +194,7 @@ const PerfumeProductDetail: React.FC<{ productId: number }> = ({ productId }) =>
           {/* BÊN TRÁI: Ảnh sản phẩm */}
           <div className="col-span-1">
             <div className="relative">
-              {/* Giảm giá */}
-              <span className="absolute top-2 left-2 bg-red-100 text-red-500 text-xs font-bold px-2 py-1 rounded">
-                {/* Có thể thêm logic hiển thị giảm giá nếu API trả về */}
-              </span>
-
-              {/* Ảnh chính */}
-              <img
-                src={product.imageUrl}
-                alt={product.name}
-                className="w-[420px] h-[500px] shadow-md"
-              />
+              <img src={product.imageUrl} alt={product.name} className="w-[420px] h-[500px] shadow-md" />
             </div>
           </div>
 
@@ -133,18 +204,14 @@ const PerfumeProductDetail: React.FC<{ productId: number }> = ({ productId }) =>
               <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
 
               <div className="flex items-center my-3">
-                <span className="bg-red-500 text-white text-xs px-2 py-1 rounded font-bold">
-                  4.8
-                </span>
+                <span className="bg-red-500 text-white text-xs px-2 py-1 rounded font-bold">4.8</span>
                 <span className="ml-2 text-yellow-500">⭐⭐⭐⭐⭐</span>
-                <a href="#" className="text-blue-500 text-sm ml-2"></a>
               </div>
 
               <p className="text-gray-600 mb-4">{product.description}</p>
 
               <p className="text-gray-700">
-                <strong>Thương hiệu:</strong>{" "}
-                <span className="text-blue-500">{product.brand}</span>
+                <strong>Thương hiệu:</strong> <span className="text-blue-500">{product.brand}</span>
               </p>
 
               <p className="text-gray-700">
@@ -155,9 +222,7 @@ const PerfumeProductDetail: React.FC<{ productId: number }> = ({ productId }) =>
               </p>
 
               <div className="mt-4">
-                <span className="text-red-600 text-3xl font-bold">
-                  {product.price.toLocaleString()}₫
-                </span>
+                <span className="text-red-600 text-3xl font-bold">{product.price.toLocaleString()}₫</span>
               </div>
 
               {/* Chọn số lượng */}
@@ -179,7 +244,10 @@ const PerfumeProductDetail: React.FC<{ productId: number }> = ({ productId }) =>
 
               {/* Nút thêm giỏ hàng và mua */}
               <div className="flex gap-4 mt-6">
-                <button className="border px-6 py-3 text-gray-800 bg-white hover:bg-gray-200 flex items-center rounded-md">
+                <button
+                  className="border px-6 py-3 text-gray-800 bg-white hover:bg-gray-200 flex items-center rounded-md"
+                  onClick={handleAddToCart}
+                >
                   <ShoppingCartOutlined className="mr-2" /> Thêm vào giỏ hàng
                 </button>
                 <button className="px-6 py-3 text-white bg-red-600 hover:bg-red-700 rounded-md">
@@ -234,7 +302,6 @@ const PerfumeProductDetail: React.FC<{ productId: number }> = ({ productId }) =>
         {/* Chi tiết sản phẩm */}
         <div className="w-full px-10">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Chi tiết về sản phẩm</h2>
-          {/* Các thông tin chi tiết khác giữ nguyên */}
         </div>
 
         <hr className="border-t border-gray-300 my-8" />
@@ -247,7 +314,6 @@ const PerfumeProductDetail: React.FC<{ productId: number }> = ({ productId }) =>
         </div>
       </div>
     </div>
-
   );
 };
 
