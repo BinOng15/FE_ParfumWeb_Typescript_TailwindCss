@@ -130,9 +130,9 @@ const CustomHeader: React.FC = () => {
             <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-pink-600 rounded-md"></span>
           )}
         </Link>
-        <Link to="/about" className="relative hover:text-pink-600 text-center">
+        <Link to="/PerfumeIntroduction" className="relative hover:text-pink-600 text-center">
           GIỚI THIỆU
-          {location.pathname === "/about" && (
+          {location.pathname === "/PerfumeIntroduction" && (
             <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-pink-600 rounded-md"></span>
           )}
         </Link>

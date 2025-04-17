@@ -18,6 +18,7 @@ import LoginPage from "../pages/LoginPage";
 import StaffManagementPage from "../pages/admin/customer/StaffManagementPage";
 import SignUpPage from "../pages/SignUpPage";
 import VerifyAccountManagementPage from "../pages/admin/customer/VerifyAccountManagementPage";
+import PerfumeIntroduction from "../pages/customer/PerfumeIntroduction";
 
 interface ProtectedRouteProps {
   element: JSX.Element;
@@ -93,6 +94,15 @@ const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
+        <Route
+          path="/PerfumeIntroduction"
+          element={
+            <MainLayout>
+              < PerfumeIntroduction />
+            </MainLayout>
+          }
+        />
+
         <Route
           path="/perfumeProduct"
           element={
