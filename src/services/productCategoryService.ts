@@ -5,6 +5,7 @@ import {
   BaseResponse,
   CreateProductCategoryRequest,
   DeleteProductCategoryRequest,
+  GetAllProductCategoryRequest,
   GetCategoriesByProductRequest,
   GetProductsByCategoryRequest,
   ListProductCategoryResponse,
@@ -30,7 +31,21 @@ const productCategoryService = {
       throw error;
     }
   },
+  getallProductCategory: async (
+    data: GetAllProductCategoryRequest
+  ): Promise<{ pageData: ProductCategoryResponse[]; pageInfo: { totalItem: number } }> => {
 
+    try {
+      const response = await axiosInstance.post("/productcategory/getallproductcategories", data);
+      return {
+        pageData: response.data.data.pageData || [],
+        pageInfo: response.data.data.pageInfo || { totalItem: 0 },
+      };
+    } catch (error) {
+      console.error("Error fetching all product categories:", error);
+      throw error;
+    }
+  },
   // Cập nhật mối quan hệ sản phẩm-danh mục
   updateProductCategory: async (
     data: UpdateProductCategoryRequest

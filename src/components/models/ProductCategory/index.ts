@@ -23,14 +23,23 @@ export interface CreateProductCategoryRequest {
 export interface UpdateProductCategoryRequest {
   productId: number;
   categoryId: number;
-  Status: boolean;
+
+  status: boolean;
+
 }
 
 export interface DeleteProductCategoryRequest {
   productId: number;
   categoryId: number;
-}
 
+}
+export interface GetAllProductCategoryRequest {
+  pageNum: number;
+  pageSize: number;
+  keyWord?: string;
+  Status?: boolean;
+
+}
 export interface GetCategoriesByProductRequest {
   productId: number;
 }

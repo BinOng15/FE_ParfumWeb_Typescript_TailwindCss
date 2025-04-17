@@ -13,14 +13,19 @@ const AdminSidebar: React.FC = () => {
         { key: "/admin/verify-account", icon: <UserOutlined />, label: "Xác minh tài khoản" },
         { key: "/admin/staff-management", icon: <UserOutlined />, label: "Nhân viên" },
         {
-            key: "/admin/manage-vaccine",
+            key: "/admin/product-management",
             icon: <ExperimentOutlined />,
             label: "Nước hoa",
         },
         {
-            key: "/admin/manage-vaccine-disease",
+            key: "/admin/category-management",
             icon: <MinusCircleOutlined />,
-            label: "Loại nước hoa",
+            label: "Danh mục",
+        },
+        {
+            key: "/admin/product-category",
+            icon: <MinusCircleOutlined />,
+            label: "Mối quan hệ",
         },
     ];
 

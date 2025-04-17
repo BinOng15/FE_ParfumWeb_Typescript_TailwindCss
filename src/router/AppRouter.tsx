@@ -18,7 +18,13 @@ import LoginPage from "../pages/LoginPage";
 import StaffManagementPage from "../pages/admin/customer/StaffManagementPage";
 import SignUpPage from "../pages/SignUpPage";
 import VerifyAccountManagementPage from "../pages/admin/customer/VerifyAccountManagementPage";
+
 import PerfumeIntroduction from "../pages/customer/PerfumeIntroduction";
+
+import ProductManagementPage from "../pages/admin/product/ProductManagementPage";
+import CategoryManagementPage from "../pages/admin/category/CategoryManagementPage";
+import ProductCategoryManagementPage from "../pages/admin/product-category/ProductCategoryManagementPage";
+
 
 interface ProtectedRouteProps {
   element: JSX.Element;
@@ -194,6 +200,33 @@ const AppRoutes: React.FC = () => {
           element={
             <ProtectedRouter
               element={<StaffManagementPage />}
+              allowedRoles={["Admin"]}
+            />
+          }
+        />
+        <Route
+          path="/admin/product-management"
+          element={
+            <ProtectedRouter
+              element={<ProductManagementPage />}
+              allowedRoles={["Admin"]}
+            />
+          }
+        />
+        <Route
+          path="/admin/category-management"
+          element={
+            <ProtectedRouter
+              element={<CategoryManagementPage />}
+              allowedRoles={["Admin"]}
+            />
+          }
+        />
+        <Route
+          path="/admin/product-category"
+          element={
+            <ProtectedRouter
+              element={<ProductCategoryManagementPage />}
               allowedRoles={["Admin"]}
             />
           }

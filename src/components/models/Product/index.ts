@@ -21,22 +21,22 @@ export interface ProductResponse {
 }
 
 export interface CreateProductRequest {
-  Name: string;
-  Brand: string;
-  Price: number;
-  Stock: number;
-  Description: string;
-  ImageUrl: string;
-  CreatedAt?: Date; // Có thể không bắt buộc nếu backend tự tạo
-  UpdatedAt?: Date; // Có thể không bắt buộc nếu backend tự tạo
-  IsDeleted?: boolean; // Có thể không bắt buộc nếu backend tự tạo
+  name: string;
+  brand: string;
+  price: number;
+  stock: number;
+  description: string;
+  imageUrl: string;
+  createdAt?: Date; // Có thể không bắt buộc nếu backend tự tạo
+  updatedAt?: Date; // Có thể không bắt buộc nếu backend tự tạo
+  isDeleted?: boolean; // Có thể không bắt buộc nếu backend tự tạo
 }
 
 export interface GetAllProductRequest {
   pageNum: number;
   pageSize: number;
   keyWord?: string;
-  Status?: boolean;
+  status?: boolean;
 }
 
 export interface DynamicResponse<T> {
