@@ -3,11 +3,10 @@ import {
     UserOutlined,
     SettingOutlined,
     LogoutOutlined,
-    CreditCardOutlined,
     ShoppingOutlined,
 } from "@ant-design/icons";
 import { Avatar, message } from "antd";
-import { Link, useLocation } from "react-router-dom"; // Thêm Link và useLocation
+import { Link, useLocation, useNavigate } from "react-router-dom"; // Thêm Link và useLocation
 import { useDispatch } from "react-redux";
 import { logout } from "../../redux/authSlice";
 
@@ -15,13 +14,12 @@ const Sidebar = () => {
     const location = useLocation(); // Lấy URL hiện tại
     const [activeItem, setActiveItem] = useState("Thông tin cá nhân"); // Mặc định
     const dispatch = useDispatch();
-
+    const navigate = useNavigate(); // Thêm useNavigate để điều hướng
 
     const menuItems = [
         { name: "Tài khoản của tôi", icon: <UserOutlined />, link: "/profile" },
         { name: "Thông tin", icon: <UserOutlined />, link: "/profile/edit" },
         { name: "Đơn hàng", icon: <ShoppingOutlined />, link: "/order-history" },
-        { name: "Thanh toán", icon: <CreditCardOutlined />, link: "/payment" },
         { name: "Thay đổi mật khẩu", icon: <SettingOutlined />, link: "/change-password" },
         { name: "Đăng xuất", icon: <LogoutOutlined />, link: "#" }, // Không cần link thật
     ];
@@ -30,6 +28,7 @@ const Sidebar = () => {
     const handleLogout = () => {
         localStorage.removeItem("token");
         dispatch(logout());
+        navigate("/login"); // Điều hướng về trang đăng nhập
         message.success("Đăng xuất thành công!");
     };
 

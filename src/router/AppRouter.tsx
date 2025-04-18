@@ -28,6 +28,8 @@ import OrderManagementPage from "../pages/staff/order/OrderManagementPage";
 import PaymentSuccess from "../pages/customer/PaymentSuccess";
 import UserProfile from "../pages/customer/UserProfile";
 import OrderTransactionPage from "../pages/customer/order/OrderTransactionPage";
+import ChangePasswordPage from "../pages/customer/password/ChangePasswordPage";
+import PaymentManagementPage from "../pages/staff/payment/PaymentManagementPage";
 
 
 interface ProtectedRouteProps {
@@ -180,6 +182,15 @@ const AppRoutes: React.FC = () => {
           }
         />
         <Route
+          path="/change-password"
+          element={
+            <ProtectedRouter
+              element={<ChangePasswordPage />}
+              allowedRoles={["User"]}
+            />
+          }
+        />
+        <Route
           path="/oderhistory"
           element={
             <MainLayout>
@@ -210,6 +221,15 @@ const AppRoutes: React.FC = () => {
           element={
             <ProtectedRouter
               element={<OrderManagementPage />}
+              allowedRoles={["Staff"]}
+            />
+          }
+        />
+        <Route
+          path="/staff/payment-management"
+          element={
+            <ProtectedRouter
+              element={<PaymentManagementPage />}
               allowedRoles={["Staff"]}
             />
           }

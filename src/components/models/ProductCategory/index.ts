@@ -10,7 +10,6 @@ export interface BaseResponse<T = any> {
 export interface ProductCategoryResponse {
   productId: number;
   categoryId: number;
-
   status: boolean;
 }
 

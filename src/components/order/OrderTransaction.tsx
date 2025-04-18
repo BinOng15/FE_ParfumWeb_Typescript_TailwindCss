@@ -7,6 +7,20 @@ import orderService from "../../services/orderService";
 import authService from "../../services/authService";
 import Sidebar from "../../components/Profile/SidebarProfli";
 import { OrderResponse } from "../models/Order";
+import productService from "../../services/productService";
+
+const generateRandomCode = (): string => {
+    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const length = 6;
+    let result = "";
+
+    for (let i = 0; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * characters.length);
+        result += characters.charAt(randomIndex);
+    }
+
+    return result;
+};
 
 const { Search } = Input;
 const { Option } = Select;
@@ -92,6 +106,15 @@ const OrderTransaction: React.FC = () => {
             console.log("Raw orders:", orderData);
             console.log("Normalized orders:", normalizedOrders);
 
+            // Sắp xếp theo orderDate giảm dần (mới nhất lên trước)
+            normalizedOrders.sort((a: OrderResponse, b: OrderResponse) => {
+                const dateA = new Date(a.orderDate).getTime();
+                const dateB = new Date(b.orderDate).getTime();
+                return dateB - dateA; // Giảm dần
+            });
+
+            console.log("Sorted orders:", normalizedOrders);
+
             // Lọc phía client
             if (normalizedOrders.length > 0) {
                 // Lọc theo trạng thái
@@ -151,11 +174,35 @@ const OrderTransaction: React.FC = () => {
     const handleReset = () => {
         setSearchKeyword("");
         setFilterStatus("");
+        setPagination((prev) => ({ ...prev, current: 1 }));
+        fetchOrders(1, pagination.pageSize, "");
     };
 
-    const showOrderDetails = (order: OrderResponse) => {
-        setSelectedOrder(order);
-        setIsDetailModalVisible(true);
+    const showOrderDetails = async (order: OrderResponse) => {
+        try {
+            const updatedOrder = { ...order };
+            // Lấy thông tin sản phẩm cho từng OrderDetail
+            const productPromises = updatedOrder.orderDetails.map(async (detail: any) => {
+                if (detail.productId) {
+                    const product = await productService.getProductById(detail.productId);
+                    return { ...detail, product };
+                }
+                return detail;
+            });
+
+            updatedOrder.orderDetails = await Promise.all(productPromises);
+            console.log("Updated order details with products:", updatedOrder.orderDetails);
+            setSelectedOrder(updatedOrder);
+            setIsDetailModalVisible(true);
+        } catch (error: any) {
+            console.error("Error fetching product details:", error);
+            notification.error({
+                message: "Lỗi",
+                description: "Không thể tải thông tin sản phẩm.",
+            });
+            setSelectedOrder(order);
+            setIsDetailModalVisible(true);
+        }
     };
 
     const handleDetailModalClose = () => {
@@ -255,10 +302,27 @@ const OrderTransaction: React.FC = () => {
             width: 60,
         },
         {
+            title: "Mã đơn hàng",
+            dataIndex: "orderId",
+            key: "orderId",
+            render: () => (
+                <span
+                    style={{
+                        color: "#d48806",
+                        backgroundColor: "#fffbe6",
+                        padding: "2px 8px",
+                        borderRadius: "4px",
+                    }}
+                >
+                    {generateRandomCode()}
+                </span>
+            ),
+        },
+        {
             title: "Tổng tiền",
             dataIndex: "totalAmount",
             key: "totalAmount",
-            render: (totalAmount: number) => <span>{totalAmount.toLocaleString("vi-VN")} VNĐ</span>,
+            render: (totalAmount: number) => <span>{totalAmount.toLocaleString("vi-VN")}đ</span>,
         },
         {
             title: "Ngày đặt hàng",
@@ -363,7 +427,7 @@ const OrderTransaction: React.FC = () => {
                         <>
                             <Descriptions column={1} bordered>
                                 <Descriptions.Item label="Tổng tiền">
-                                    {selectedOrder.totalAmount.toLocaleString("vi-VN")} VNĐ
+                                    {selectedOrder.totalAmount.toLocaleString("vi-VN")}đ
                                 </Descriptions.Item>
                                 <Descriptions.Item label="Ngày đặt hàng">
                                     {new Date(selectedOrder.orderDate).toLocaleDateString("vi-VN", {
@@ -378,6 +442,24 @@ const OrderTransaction: React.FC = () => {
                             <Table
                                 dataSource={selectedOrder.orderDetails}
                                 columns={[
+                                    {
+                                        title: "Ảnh sản phẩm",
+                                        key: "imageUrl",
+                                        render: (record: any) => (
+                                            <img
+                                                src={record.product?.imageUrl || "https://via.placeholder.com/50"}
+                                                alt={record.productName || "Product"}
+                                                style={{
+                                                    width: "50px",
+                                                    height: "50px",
+                                                    objectFit: "cover",
+                                                    borderRadius: "4px",
+                                                }}
+                                                onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/50")}
+                                            />
+                                        ),
+                                        width: 150,
+                                    },
                                     {
                                         title: "Tên sản phẩm",
                                         dataIndex: "productName",

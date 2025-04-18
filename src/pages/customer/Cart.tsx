@@ -109,8 +109,6 @@ const Cart: React.FC = () => {
           setCartItems([]);
         }
       } catch (error: any) {
-        console.error("Error fetching cart:", error);
-        message.error(error.message || "Lỗi khi tải giỏ hàng!");
         setCartItems([]);
       } finally {
         setLoading(false);
@@ -344,14 +342,14 @@ const Cart: React.FC = () => {
 
         // Xử lý thanh toán
         if (paymentMethod === "banking" && paymentResponse.data.checkoutUrl) {
-          localStorage.setItem("pendingOrderId", newOrderId.toString());
+          localStorage.setItem("Paid", newOrderId.toString());
           window.location.href = paymentResponse.data.checkoutUrl;
         } else if (paymentMethod === "cash") {
           notification.success({
             message: "Thành công",
             description: "Đơn hàng đã được tạo với thanh toán tiền mặt. Vui lòng thanh toán khi nhận hàng!",
           });
-          navigate("/orders");
+          navigate("/order-history");
         }
       } else {
         throw new Error(paymentResponse.message || "Không thể tạo thanh toán!");
@@ -494,6 +492,7 @@ const Cart: React.FC = () => {
           </div>
         ) : (
           <p className="text-center text-lg">Giỏ hàng của bạn trống!</p>
+
         )}
       </div>
     </div>

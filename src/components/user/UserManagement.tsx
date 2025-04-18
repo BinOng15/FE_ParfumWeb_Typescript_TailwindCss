@@ -198,6 +198,7 @@ const UserManagement: React.FC = () => {
             title: "Địa chỉ",
             dataIndex: "address",
             key: "address",
+            width: 200,
         },
         {
             title: "Trạng thái",

@@ -12,7 +12,7 @@ const StaffSidebar: React.FC = () => {
     const location = useLocation();
 
     const menuItems = [
-        { key: "/staff/dashboard", icon: <DashOutlined />, label: "Bảng chính" },
+        { key: "/staff", icon: <DashOutlined />, label: "Bảng chính" },
 
         {
             key: "/staff/order-management",

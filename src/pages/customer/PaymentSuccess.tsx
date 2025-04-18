@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, Button, message, Spin } from "antd";
 import orderService from "../../services/orderService";
 import paymentService from "../../services/paymentService";
+import { CheckCircleOutlined } from "@ant-design/icons";
 
 interface PaymentResponse {
     paymentId: number;
@@ -37,7 +38,6 @@ interface OrderResponse {
 const PaymentSuccess: React.FC = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const [countdown, setCountdown] = useState(5);
     const [loading, setLoading] = useState(true);
     const [paymentInfo] = useState<{
         code: string;
@@ -81,8 +81,7 @@ const PaymentSuccess: React.FC = () => {
                     message.error("Thanh toán không thành công hoặc đã bị hủy!");
                 }
             } catch (error) {
-                console.error("Error fetching payment/order:", error);
-                message.error("Lỗi khi tải thông tin thanh toán/đơn hàng!");
+                return;
             } finally {
                 setLoading(false);
             }
@@ -90,79 +89,76 @@ const PaymentSuccess: React.FC = () => {
 
         fetchPaymentAndOrder();
 
-        // Đếm ngược để chuyển hướng
-        const timer = setInterval(() => {
-            setCountdown((prev) => {
-                if (prev <= 1) {
-                    clearInterval(timer);
-                    navigate("/");
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
 
-        return () => clearInterval(timer);
+        return;
     }, [navigate, paymentInfo.id, paymentInfo.status, paymentInfo.code]);
 
     const handleRedirect = () => {
-        navigate("/");
+        navigate("/order-history");
+        window.location.reload(); // Reload the page to reflect any changes
     };
 
     return (
-        <div className="flex justify-center items-center min-h-screen bg-gray-100">
+        <div className="flex justify-center items-center mt-4">
             <Card
                 title="Kết quả thanh toán"
-                style={{ width: 500 }}
-                className="shadow-lg"
+                style={{ width: 500, backgroundColor: "#ffe4e6", borderColor: "#ff80ab" }}
+                className="shadow-lg border-2"
+                headStyle={{ backgroundColor: "#ff80ab", color: "#fff", textAlign: "center" }}
             >
-                {loading ? (
-                    <Spin tip="Đang tải thông tin..." />
-                ) : (
-                    <>
-                        <h3>Thông tin thanh toán</h3>
-                        <p><strong>Mã trạng thái:</strong> {paymentInfo.code}</p>
-                        <p><strong>ID giao dịch:</strong> {paymentInfo.id}</p>
-                        <p><strong>Hủy thanh toán:</strong> {paymentInfo.cancel}</p>
-                        <p><strong>Trạng thái:</strong> {paymentInfo.status}</p>
-                        <p><strong>Mã đơn hàng:</strong> {paymentInfo.orderCode}</p>
+                <div className="flex justify-center items-center mb-4">
+                    <div className="text-4xl font-bold flex-col text-pink-500 flex items-center">
+                        <CheckCircleOutlined className="text-pink-500 text-7xl" />
+                        <span className="text-black text-xl flex items-center">
+                            <span className="mr-2">THANH TOÁN THÀNH CÔNG</span>
+                        </span>
+                    </div>
+                </div>
+                {
+                    loading ? (
+                        <Spin tip="Đang tải thông tin..." />
+                    ) : (
+                        <>
+                            <h3 className="text-pink-600">Thông tin thanh toán</h3>
+                            <p><strong>Mã trạng thái:</strong> {paymentInfo.code}</p>
+                            <p><strong>ID giao dịch:</strong> {paymentInfo.id}</p>
+                            <p><strong>Trạng thái:</strong> {paymentInfo.status}</p>
+                            <p><strong>Mã đơn hàng:</strong> {paymentInfo.orderCode}</p>
 
-                        {orderInfo && (
-                            <>
-                                <h3 className="mt-4">Thông tin đơn hàng</h3>
-                                <p><strong>ID đơn hàng:</strong> {orderInfo.orderId}</p>
-                                <p><strong>Tổng tiền:</strong> {orderInfo.totalAmount.toLocaleString()}đ</p>
-                                <p><strong>Trạng thái:</strong> {orderInfo.status}</p>
-                                <p><strong>Ngày tạo:</strong> {new Date(orderInfo.createdAt).toLocaleString()}</p>
-                                {orderInfo.orderDetails && orderInfo.orderDetails.length > 0 && (
-                                    <>
-                                        <h4>Sản phẩm:</h4>
-                                        <ul>
-                                            {orderInfo.orderDetails.map((detail) => (
-                                                <li key={detail.orderDetailId}>
-                                                    {detail.productName} (x{detail.quantity}) - {detail.unitPrice.toLocaleString()}đ
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </>
-                                )}
-                            </>
-                        )}
-
-                        <p className="mt-4">
-                            Sẽ chuyển hướng về trang chủ sau <strong>{countdown}</strong> giây...
-                        </p>
-                        <Button
-                            type="primary"
-                            onClick={handleRedirect}
-                            className="mt-4 w-full"
-                        >
-                            Về trang chủ ngay
-                        </Button>
-                    </>
-                )}
-            </Card>
-        </div>
+                            {orderInfo && (
+                                <>
+                                    <h3 className="mt-4 text-pink-600">Thông tin đơn hàng</h3>
+                                    <p><strong>ID đơn hàng:</strong> {orderInfo.orderId}</p>
+                                    <p><strong>Tổng tiền:</strong> {orderInfo.totalAmount.toLocaleString()}đ</p>
+                                    <p><strong>Trạng thái:</strong> {orderInfo.status}</p>
+                                    <p><strong>Ngày tạo:</strong> {new Date(orderInfo.createdAt).toLocaleString()}</p>
+                                    {orderInfo.orderDetails && orderInfo.orderDetails.length > 0 && (
+                                        <>
+                                            <h4 className="text-pink-600">Sản phẩm:</h4>
+                                            <ul>
+                                                {orderInfo.orderDetails.map((detail) => (
+                                                    <li key={detail.orderDetailId}>
+                                                        {detail.productName} (x{detail.quantity}) - {detail.unitPrice.toLocaleString()}đ
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </>
+                                    )}
+                                </>
+                            )}
+                            <Button
+                                type="primary"
+                                onClick={handleRedirect}
+                                className="mt-4 w-full"
+                                style={{ backgroundColor: "#ff80ab", borderColor: "#ff4081" }}
+                            >
+                                Về trang Lịch Sử Đơn Hàng
+                            </Button>
+                        </>
+                    )
+                }
+            </Card >
+        </div >
     );
 };
 

@@ -63,16 +63,18 @@ const paymentService = {
     // Lấy danh sách tất cả thanh toán (phân trang)
     getAllPayments: async (
         data: GetAllPaymentRequest
-    ): Promise<DynamicResponse<PaymentResponse>> => {
+    ): Promise<{ pageData: PaymentResponse[]; pageInfo: { totalItem: number } }> => {
         try {
             const response = await axiosInstance.post("/payment/getall", data);
-            return response.data;
+            return {
+                pageData: response.data.data.pageData || [],
+                pageInfo: response.data.data.pageInfo || { totalItem: 0 },
+            };
         } catch (error: any) {
             console.error("Error fetching all payments:", error);
             throw new Error(error.response?.data?.Message || "Không thể lấy danh sách thanh toán");
         }
     },
-
     // Lấy danh sách thanh toán theo trạng thái
     getPaymentsByStatus: async (
         status: string

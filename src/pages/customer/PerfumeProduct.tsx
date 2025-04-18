@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Breadcrumb, Input, Pagination } from "antd";
-import { SearchOutlined, HeartOutlined, ShoppingCartOutlined } from "@ant-design/icons";
+import { SearchOutlined } from "@ant-design/icons";
 import { axiosInstance } from "../../services/axiosInstance";
 import { useNavigate } from "react-router-dom";
 import { AxiosResponse } from "axios";
@@ -381,14 +381,14 @@ const PerfumeProduct: React.FC = () => {
                   </span>
                 </div>
               </div>
-              <div className="absolute bottom-3 right-3 flex space-x-2">
+              {/* <div className="absolute bottom-3 right-3 flex space-x-2">
                 <button className="bg-gray-200 p-2 rounded-full text-gray-600 hover:text-red-500 hover:bg-gray-300 transition">
                   <HeartOutlined className="text-xl" />
                 </button>
                 <button className="bg-gray-200 p-2 rounded-full text-gray-600 hover:text-blue-500 hover:bg-gray-300 transition">
                   <ShoppingCartOutlined className="text-xl" />
                 </button>
-              </div>
+              </div> */}
             </div>
           ))
         ) : (

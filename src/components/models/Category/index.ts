@@ -12,7 +12,6 @@ export interface CategoryResponse {
   name: string;
   description: string;
   status: boolean;
-
 }
 
 export interface CreateCategoryRequest {

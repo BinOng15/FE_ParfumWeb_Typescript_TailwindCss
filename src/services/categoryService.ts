@@ -48,7 +48,7 @@ const categoryService = {
   ): Promise<CategoryResponse> => {
     try {
       const response = await axiosInstance.get(`/category/getby/${categoryId}`);
-      return response.data.Data;
+      return response.data.data;
     } catch (error) {
       console.error(`Error fetching category by ID ${categoryId}:`, error);
       throw error;

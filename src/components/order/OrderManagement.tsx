@@ -23,7 +23,7 @@ const OrderManagement: React.FC = () => {
     const [searchKeyword, setSearchKeyword] = useState("");
     const [selectedOrder, setSelectedOrder] = useState<OrderResponse | null>(null);
     const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
-    const [filterStatus, setFilterStatus] = useState<string>(""); // Mặc định là "Tất cả"
+    const [filterStatus, setFilterStatus] = useState<string>("");
 
     const statusOptions = [
         { value: "", label: "Tất cả" },
@@ -36,7 +36,6 @@ const OrderManagement: React.FC = () => {
         { value: "Rejected", label: "Đã từ chối" },
     ];
 
-    // Chuẩn hóa trạng thái từ API
     const normalizeStatus = (status: string | undefined): string => {
         if (!status) return "Unknown";
         const statusMap: { [key: string]: string } = {
@@ -47,12 +46,12 @@ const OrderManagement: React.FC = () => {
             completed: "Completed",
             cancelled: "Cancelled",
             rejected: "Rejected",
-            waitingforpaid: "Cart", // Ánh xạ WaitingForPaid về Cart
+            waitingforpaid: "Cart",
         };
         return statusMap[status.toLowerCase()] || "Unknown";
     };
 
-    const fetchOrders = async (page = 1, pageSize = 5, statusFilter = filterStatus) => {
+    const fetchOrders = async (page = 1, pageSize = 5) => {
         setLoading(true);
         try {
             const data: GetAllOrderRequest = {
@@ -60,44 +59,15 @@ const OrderManagement: React.FC = () => {
                 pageSize: pageSize,
             };
             const response = await orderService.getAllOrders(data);
-            let orderData = (response.pageData || []).map(order => ({
+            const orderData = (response.pageData || []).map(order => ({
                 ...order,
                 status: normalizeStatus(order.status),
             }));
 
-            // Debug trạng thái từ API và statusFilter
-            console.log("statusFilter:", statusFilter);
-            console.log("Order statuses:", orderData.map(order => order.status));
-
-            // Lọc phía client
-            if (orderData.length > 0) {
-                // Lọc theo trạng thái
-                if (statusFilter) {
-                    orderData = orderData.filter((order) => order.status === statusFilter);
-                }
-
-                // Lọc theo từ khóa (trạng thái hoặc tên khách hàng)
-                if (searchKeyword) {
-                    const lowerKeyword = searchKeyword.toLowerCase();
-                    orderData = orderData.filter((order) => {
-                        const customer = customers[order.customerId];
-                        const customerName = customer ? customer.name.toLowerCase() : "";
-                        const statusText = statusOptions.find(opt => opt.value === order.status)?.label.toLowerCase() || "";
-                        return (
-                            statusText.includes(lowerKeyword) ||
-                            customerName.includes(lowerKeyword)
-                        );
-                    });
-                }
-            }
-
-            // Debug dữ liệu sau khi lọc
-            console.log("Filtered orders:", orderData);
+            console.log("API response:", response);
 
             // Lấy danh sách customerId duy nhất
             const customerIds = [...new Set(orderData.map((order) => order.customerId))];
-
-            // Gọi API getCustomerById cho từng customerId
             const customerPromises = customerIds.map(async (id) => {
                 try {
                     return await customerService.getCustomerById(id);
@@ -108,7 +78,6 @@ const OrderManagement: React.FC = () => {
             });
             const customerResults = await Promise.all(customerPromises);
 
-            // Lưu thông tin khách hàng vào state
             const customerMap = customerResults.reduce((acc, customer) => {
                 if (customer) {
                     acc[customer.customerId] = customer;
@@ -121,7 +90,7 @@ const OrderManagement: React.FC = () => {
             setPagination({
                 current: page,
                 pageSize: pageSize,
-                total: orderData.length, // Phản ánh số lượng sau lọc
+                total: response.pageInfo?.totalItem || orderData.length, // Sử dụng totalItem từ API
             });
         } catch (error: any) {
             console.error("Lỗi lấy đơn hàng:", error);
@@ -135,12 +104,10 @@ const OrderManagement: React.FC = () => {
         }
     };
 
-    // Gọi fetchOrders khi filterStatus hoặc searchKeyword thay đổi
     useEffect(() => {
-        fetchOrders(1, pagination.pageSize, filterStatus);
+        fetchOrders(1, pagination.pageSize);
     }, [filterStatus, searchKeyword]);
 
-    // Khởi tạo dữ liệu lần đầu
     useEffect(() => {
         fetchOrders(pagination.current, pagination.pageSize);
     }, []);
@@ -148,18 +115,18 @@ const OrderManagement: React.FC = () => {
     const handleTableChange = (pagination: any) => {
         const { current, pageSize } = pagination;
         setPagination((prev) => ({ ...prev, current, pageSize }));
-        fetchOrders(current, pageSize, filterStatus);
+        fetchOrders(current, pageSize);
     };
 
     const onSearch = (value: string) => {
         setSearchKeyword(value);
-        // fetchOrders được gọi qua useEffect
     };
 
     const handleReset = () => {
         setSearchKeyword("");
         setFilterStatus("");
-        // fetchOrders được gọi qua useEffect
+        setPagination((prev) => ({ ...prev, current: 1 }));
+        fetchOrders(1, pagination.pageSize);
     };
 
     const showOrderDetails = (order: OrderResponse) => {
@@ -188,7 +155,7 @@ const OrderManagement: React.FC = () => {
                             message: "Thành công",
                             description: `Cập nhật trạng thái đơn hàng thành "${statusText}" thành công!`,
                         });
-                        fetchOrders(pagination.current, pagination.pageSize, filterStatus);
+                        fetchOrders(pagination.current, pagination.pageSize);
                     } else {
                         throw new Error(response.message || "Không thể cập nhật trạng thái!");
                     }
@@ -202,38 +169,6 @@ const OrderManagement: React.FC = () => {
         });
     };
 
-    // const handleDeleteOrder = (order: OrderResponse) => {
-    //     Modal.confirm({
-    //         title: "Xác nhận xóa",
-    //         content: `Bạn có chắc chắn muốn ${order.isDeleted ? "khôi phục" : "xóa"} đơn hàng?`,
-    //         okText: order.isDeleted ? "Khôi phục" : "Xóa",
-    //         okType: order.isDeleted ? "primary" : "danger",
-    //         cancelText: "Hủy",
-    //         onOk: async () => {
-    //             try {
-    //                 const response = await orderService.deleteOrder(order.orderId, !order.isDeleted);
-    //                 if (response.Success) {
-    //                     notification.success({
-    //                         message: "Thành công",
-    //                         description: order.isDeleted
-    //                             ? "Khôi phục đơn hàng thành công!"
-    //                             : "Xóa đơn hàng thành công!",
-    //                     });
-    //                     fetchOrders(pagination.current, pagination.pageSize, filterStatus);
-    //                 } else {
-    //                     throw new Error(response.Message || "Không thể thực hiện hành động!");
-    //                 }
-    //             } catch (error: any) {
-    //                 notification.error({
-    //                     message: "Lỗi",
-    //                     description: error.message || "Không thể thực hiện hành động!",
-    //                 });
-    //             }
-    //         },
-    //     });
-    // };
-
-    // Hàm hiển thị trạng thái với text và style
     const getStatusStyle = (status: string) => {
         let text = "";
         let style = {};
@@ -315,7 +250,6 @@ const OrderManagement: React.FC = () => {
         return <span style={style}>{text}</span>;
     };
 
-    // Định nghĩa các trạng thái có thể chuyển đổi và icon tương ứng
     const getAvailableStatuses = (currentStatus: string) => {
         switch (currentStatus) {
             case "Cart":
@@ -408,11 +342,6 @@ const OrderManagement: React.FC = () => {
                             style={{ color: "blue", cursor: "pointer", fontSize: "18px" }}
                             title="Xem chi tiết"
                         />
-                        {/* <DeleteOutlined
-                            onClick={() => handleDeleteOrder(record)}
-                            style={{ color: record.isDeleted ? "green" : "red", cursor: "pointer", fontSize: "18px" }}
-                            title={record.isDeleted ? "Khôi phục" : "Xóa"}
-                        /> */}
                         {availableStatuses.map(({ status, icon, tooltip }) => (
                             <Tooltip key={status} title={tooltip}>
                                 <Button
