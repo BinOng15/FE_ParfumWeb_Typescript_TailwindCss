@@ -144,9 +144,12 @@ const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
-        <Route path="/decant" element={<MainLayout>
-          <DecantPage />
-        </MainLayout>} />
+        <Route
+          path="/decant"
+          element={
+            <MainLayout>
+              <DecantPage />
+            </MainLayout>} />
         <Route
           path="/categoryDetail/:categoryId" element={
             <MainLayout>
