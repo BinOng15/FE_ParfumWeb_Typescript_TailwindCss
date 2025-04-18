@@ -194,6 +194,11 @@ const ProductList: React.FC = () => {
     navigate(`/perfumeProductDetail/${productId}`);
   };
 
+  // Hàm xử lý khi nhấn vào tên danh mục
+  const handleCategoryClick = (categoryId: number) => {
+    navigate(`/categoryDetail/${categoryId}`);
+  };
+
   return (
     <section className="px-10 py-10 bg-white">
       {loadingCategories ? (
@@ -201,7 +206,12 @@ const ProductList: React.FC = () => {
       ) : (
         categories.map((category) => (
           <div key={category.categoryId} className="mb-10">
-            <h2 className="text-2xl font-bold">{category.name}</h2>
+            <h2
+              className="text-2xl font-bold cursor-pointer hover:text-[#FF8787] transition-colors"
+              onClick={() => handleCategoryClick(category.categoryId)}
+            >
+              {category.name}
+            </h2>
             {loadingProducts[category.categoryId] ? (
               <p>Loading products...</p>
             ) : productsByCategory[category.categoryId]?.length > 0 ? (
