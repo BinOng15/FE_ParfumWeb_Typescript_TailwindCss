@@ -135,7 +135,7 @@ const orderService = {
         try {
             const response =
                 await axiosInstance.get(`/order/getbycustomerid/${customerId}`);
-            return response.data.Data;
+            return response.data;
         } catch (error) {
             console.error(`Error fetching order by customer ID ${customerId}:`, error);
             throw error;

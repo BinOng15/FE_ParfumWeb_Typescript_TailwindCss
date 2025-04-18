@@ -26,6 +26,8 @@ import CategoryManagementPage from "../pages/admin/category/CategoryManagementPa
 import ProductCategoryManagementPage from "../pages/admin/product-category/ProductCategoryManagementPage";
 import OrderManagementPage from "../pages/staff/order/OrderManagementPage";
 import PaymentSuccess from "../pages/customer/PaymentSuccess";
+import UserProfile from "../pages/customer/UserProfile";
+import OrderTransactionPage from "../pages/customer/order/OrderTransactionPage";
 
 
 interface ProtectedRouteProps {
@@ -81,6 +83,7 @@ const AppRoutes: React.FC = () => {
   return (
     <AuthProvider>
       <Routes>
+        {/* Public Pages */}
         <Route
           path="/login"
           element={
@@ -93,23 +96,6 @@ const AppRoutes: React.FC = () => {
             <SignUpPage />
           }
         />
-        {/* Customer Pages */}
-        <Route
-          path="/"
-          element={
-            <MainLayout>
-              <Home />
-            </MainLayout>
-          }
-        />
-        <Route
-          path="/payment/success"
-          element={
-            <MainLayout>
-              <PaymentSuccess />
-            </MainLayout>
-          }
-        />
         <Route
           path="/PerfumeIntroduction"
           element={
@@ -118,7 +104,6 @@ const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
-
         <Route
           path="/perfumeProduct"
           element={
@@ -135,6 +120,26 @@ const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
+        {/* Customer Pages */}
+        <Route
+          path="/"
+          element={
+            <MainLayout>
+              <ProtectedRouter
+                element={<Home />}
+                allowedRoles={["User"]}
+              />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/payment/success"
+          element={
+            <MainLayout>
+              <PaymentSuccess />
+            </MainLayout>
+          }
+        />
         <Route
           path="/cart"
           element={
@@ -144,11 +149,34 @@ const AppRoutes: React.FC = () => {
           }
         />
         <Route
-          path="/profiles"
+          path="/profile/edit"
           element={
             <MainLayout>
-              <ProfileEdit />
+              <ProtectedRouter
+                element={<ProfileEdit />}
+                allowedRoles={["User"]}
+              />
             </MainLayout>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <MainLayout>
+              <ProtectedRouter
+                element={<UserProfile />}
+                allowedRoles={["User"]}
+              />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/order-history"
+          element={
+            <ProtectedRouter
+              element={<OrderTransactionPage />}
+              allowedRoles={["User"]}
+            />
           }
         />
         <Route

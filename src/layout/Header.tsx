@@ -59,12 +59,19 @@ const CustomHeader: React.FC = () => {
     <>
       <header className="flex items-center justify-between px-6 py-4 bg-white shadow-xl">
         <div className="flex items-center"></div>
-        <div className="ml-[250px]">
-          <img
-            src="/Screenshot 2024-12-20 150332.png"
-            alt="EundeParfum"
-            className="h-12 w-auto"
-          />
+        <div className="flex-1 flex justify-center w-full">
+          <Link to={"/"}>
+            <div
+              className="font-bold text-black w-auto ml-64"
+              style={{
+                fontFamily: "Pacifico",
+                fontWeight: 200,
+                fontSize: 40,
+              }}
+            >
+              Eun de Parfum
+            </div></Link>
+
         </div>
         <div className="flex items-center space-x-4">
           {/* <Badge count={9} offset={[0, 0]} color="red">
@@ -98,10 +105,10 @@ const CustomHeader: React.FC = () => {
           ) : (
             <>
               <Avatar
-                src="/default-avatar.png" // Sử dụng URL hình ảnh mặc định
+                src="/default.png" // Sử dụng URL hình ảnh mặc định
                 size={40} // Kích thước avatar (tương đương w-10 h-10)
                 className="cursor-pointer"
-                onClick={() => navigate("/profiles")} // Điều hướng đến trang profile
+                onClick={() => navigate("/profile")} // Điều hướng đến trang profile
               />
               <Button
                 className="border-gray-300"
