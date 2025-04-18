@@ -30,6 +30,8 @@ import UserProfile from "../pages/customer/UserProfile";
 import OrderTransactionPage from "../pages/customer/order/OrderTransactionPage";
 import ChangePasswordPage from "../pages/customer/password/ChangePasswordPage";
 import PaymentManagementPage from "../pages/staff/payment/PaymentManagementPage";
+import CategoryDetail from "../pages/customer/CategoryDetail";
+import DecantPage from "../pages/customer/DecantPage";
 
 
 interface ProtectedRouteProps {
@@ -142,6 +144,16 @@ const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
+        <Route path="/decant" element={<MainLayout>
+          <DecantPage />
+        </MainLayout>} />
+        <Route
+          path="/categoryDetail/:categoryId" element={
+            <MainLayout>
+              <CategoryDetail />
+            </MainLayout>
+
+          } />
         <Route
           path="/cart"
           element={
@@ -171,7 +183,18 @@ const AppRoutes: React.FC = () => {
               />
             </MainLayout>
           }
+        /><Route
+          path="/profile"
+          element={
+            <MainLayout>
+              <ProtectedRouter
+                element={<UserProfile />}
+                allowedRoles={["User"]}
+              />
+            </MainLayout>
+          }
         />
+
         <Route
           path="/order-history"
           element={
