@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Breadcrumb, Input, Pagination } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import { axiosInstance } from "../../services/axiosInstance";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { AxiosResponse } from "axios";
 
 interface GetAllCategoryRequest {
@@ -104,6 +104,21 @@ const getProductById = async (
   }
 };
 
+// Hàm lấy tất cả quan hệ Product-Category
+const getAllProductCategories = async (): Promise<BaseResponse<ListProductCategoryResponse>> => {
+  try {
+    const response: AxiosResponse<BaseResponse<ListProductCategoryResponse>> =
+      await axiosInstance.post(`/productcategory/getall`, {
+        pageNum: 1,
+        pageSize: 1000,
+      });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching all product categories:", error);
+    throw error;
+  }
+};
+
 const categories = [
   {
     name: "Nước hoa chiết",
@@ -161,11 +176,22 @@ const PerfumeProduct: React.FC = () => {
   const [categoriesList, setCategoriesList] = useState<CategoryResponse[]>([]);
   const [allProducts, setAllProducts] = useState<ProductResponse[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<ProductResponse[]>([]);
+  const [productCategoryMap, setProductCategoryMap] = useState<Map<number, string[]>>(new Map());
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchKeyword, setSearchKeyword] = useState("");
   const pageSize = 10;
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Đọc query parameter categoryId từ URL khi trang được tải
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const categoryIdFromUrl = queryParams.get("categoryId");
+    if (categoryIdFromUrl) {
+      setSelectedCategory(parseInt(categoryIdFromUrl));
+    }
+  }, [location.search]);
 
   // Lấy danh sách danh mục
   useEffect(() => {
@@ -190,6 +216,39 @@ const PerfumeProduct: React.FC = () => {
 
     fetchCategories();
   }, []);
+
+  // Lấy tất cả quan hệ Product-Category và tạo ánh xạ
+  useEffect(() => {
+    const fetchProductCategories = async () => {
+      try {
+        const response = await getAllProductCategories();
+        const productCategories = response.data?.pageData || [];
+
+        // Tạo ánh xạ categoryId -> categoryName
+        const categoryMap = new Map<number, string>(
+          categoriesList.map((cat) => [cat.categoryId, cat.name])
+        );
+
+        // Tạo ánh xạ productId -> danh sách categoryName
+        const tempMap = new Map<number, string[]>();
+        productCategories.forEach((item) => {
+          if (!tempMap.has(item.productId)) {
+            tempMap.set(item.productId, []);
+          }
+          const categoryName = categoryMap.get(item.categoryId) || "Danh mục không xác định";
+          tempMap.get(item.productId)!.push(categoryName);
+        });
+
+        setProductCategoryMap(tempMap);
+      } catch (error) {
+        console.error("Failed to fetch product categories:", error);
+      }
+    };
+
+    if (categoriesList.length > 0) {
+      fetchProductCategories();
+    }
+  }, [categoriesList]);
 
   // Lấy sản phẩm theo danh mục
   useEffect(() => {
@@ -236,8 +295,13 @@ const PerfumeProduct: React.FC = () => {
           }
         }
 
-        setAllProducts(productList);
-        setFilteredProducts(productList);
+        // Loại bỏ sản phẩm trùng lặp dựa trên productId
+        const uniqueProducts = Array.from(
+          new Map(productList.map((product) => [product.productId, product])).values()
+        );
+
+        setAllProducts(uniqueProducts);
+        setFilteredProducts(uniqueProducts);
       } catch (error) {
         console.error("Failed to fetch products:", error);
         setAllProducts([]);
@@ -256,9 +320,26 @@ const PerfumeProduct: React.FC = () => {
   const handleSearch = (value: string) => {
     setSearchKeyword(value);
     setCurrentPage(1); // Reset về trang 1 khi tìm kiếm
-    const filtered = allProducts.filter((product) =>
-      product.name.toLowerCase().includes(value.toLowerCase())
-    );
+
+    if (!value.trim()) {
+      setFilteredProducts(allProducts);
+      return;
+    }
+
+    const keywordLower = value.toLowerCase();
+    const filtered = allProducts.filter((product) => {
+      // Kiểm tra tên sản phẩm
+      const matchesProductName = product.name.toLowerCase().includes(keywordLower);
+
+      // Kiểm tra danh mục của sản phẩm
+      const productCategories = productCategoryMap.get(product.productId) || [];
+      const matchesCategoryName = productCategories.some((categoryName) =>
+        categoryName.toLowerCase().includes(keywordLower)
+      );
+
+      return matchesProductName || matchesCategoryName;
+    });
+
     setFilteredProducts(filtered);
   };
 
@@ -315,16 +396,17 @@ const PerfumeProduct: React.FC = () => {
 
       {/* Bộ lọc & Tìm kiếm */}
       <div className="flex justify-between items-center bg-gray-100 p-4 rounded-lg">
+        <Input
+          prefix={<SearchOutlined />}
+          placeholder="Tìm kiếm theo tên sản phẩm hoặc danh mục"
+          className="w-48"
+          value={searchKeyword}
+          onChange={(e) => setSearchKeyword(e.target.value)}
+          onPressEnter={(e) => handleSearch((e.target as HTMLInputElement).value)}
+        />
         <div className="flex space-x-3">
-          {/* <Select
-            placeholder="Nhóm Hương"
-            className="w-40 bg-gray-50 border-gray-300"
-            onChange={(value) => value}
-            allowClear
-          ></Select> */}
           <button
-            className={`px-4 py-2 rounded-full text-sm font-semibold ${selectedCategory === null ? "bg-black text-white" : "bg-white text-gray-700"
-              }`}
+            className={`px-4 py-2 rounded-full text-sm font-semibold ${selectedCategory === null ? "bg-black text-white" : "bg-white text-gray-700"}`}
             onClick={() => setSelectedCategory(null)}
           >
             Tất cả
@@ -342,14 +424,6 @@ const PerfumeProduct: React.FC = () => {
             </button>
           ))}
         </div>
-        <Input
-          prefix={<SearchOutlined />}
-          placeholder="Tìm kiếm sản phẩm"
-          className="w-64"
-          value={searchKeyword}
-          onChange={(e) => setSearchKeyword(e.target.value)}
-          onPressEnter={(e) => handleSearch((e.target as HTMLInputElement).value)}
-        />
       </div>
 
       {/* Danh sách sản phẩm */}
@@ -381,14 +455,6 @@ const PerfumeProduct: React.FC = () => {
                   </span>
                 </div>
               </div>
-              {/* <div className="absolute bottom-3 right-3 flex space-x-2">
-                <button className="bg-gray-200 p-2 rounded-full text-gray-600 hover:text-red-500 hover:bg-gray-300 transition">
-                  <HeartOutlined className="text-xl" />
-                </button>
-                <button className="bg-gray-200 p-2 rounded-full text-gray-600 hover:text-blue-500 hover:bg-gray-300 transition">
-                  <ShoppingCartOutlined className="text-xl" />
-                </button>
-              </div> */}
             </div>
           ))
         ) : (

@@ -47,7 +47,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
 
       // Điều hướng dựa trên vai trò
       switch (user.roleName) {
-        case "Customer": // Sửa từ "User" thành "Customer" để đồng bộ với LoginPage.tsx
+        case "User": // Sửa từ "User" thành "Customer" để đồng bộ với LoginPage.tsx
           navigate("/home");
           break;
         case "Staff":

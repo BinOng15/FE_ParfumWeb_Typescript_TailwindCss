@@ -199,6 +199,11 @@ const ProductList: React.FC = () => {
     navigate(`/categoryDetail/${categoryId}`);
   };
 
+  // Hàm xử lý khi nhấn "Xem thêm"
+  const handleViewMore = (categoryId: number) => {
+    navigate(`/perfumeProduct?categoryId=${categoryId}`);
+  };
+
   return (
     <section className="px-10 py-10 bg-white">
       {loadingCategories ? (
@@ -206,43 +211,60 @@ const ProductList: React.FC = () => {
       ) : (
         categories.map((category) => (
           <div key={category.categoryId} className="mb-10">
-            <h2
-              className="text-2xl font-bold cursor-pointer hover:text-[#FF8787] transition-colors"
-              onClick={() => handleCategoryClick(category.categoryId)}
-            >
-              {category.name}
-            </h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2
+                className="text-2xl font-bold cursor-pointer hover:text-[#FF8787] transition-colors"
+                onClick={() => handleCategoryClick(category.categoryId)}
+              >
+                {category.name}
+              </h2>
+              {/* Nút "Xem thêm" */}
+              <div className="flex justify-end mt-4">
+                <button
+                  onClick={() => handleViewMore(category.categoryId)}
+                  className="bg-[#FF8787] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#FF6666] transition duration-300"
+                >
+                  Xem thêm
+                </button>
+              </div>
+            </div>
             {loadingProducts[category.categoryId] ? (
               <p>Loading products...</p>
             ) : productsByCategory[category.categoryId]?.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mt-6">
-                {productsByCategory[category.categoryId].map((product) => (
-                  <div
-                    key={product.productId}
-                    className="relative bg-white shadow-md p-4 rounded-lg cursor-pointer"
-                    onClick={() => handleProductClick(product.productId)}
-                  >
-                    {/* Ảnh sản phẩm */}
-                    <img
-                      src={product.imageUrl}
-                      alt={product.name}
-                      className="w-full h-[180px] object-contain"
-                    />
+              <>
 
-                    {/* Thông tin sản phẩm */}
-                    <div className="mt-2">
-                      <h3 className="text-sm font-bold">{product.name}</h3>
-                      <p className="text-xs text-gray-500">{product.brand}</p>
-                      <p className="text-xs text-gray-500 truncate">
-                        {product.description}
-                      </p>
-                      <span className="text-red-600 font-bold text-md">
-                        {product.price.toLocaleString()} VND
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mt-6">
+                  {productsByCategory[category.categoryId]
+                    .slice(0, 5)
+                    .map((product) => (
+                      <div
+                        key={product.productId}
+                        className="relative bg-white shadow-md p-4 rounded-lg cursor-pointer hover:shadow-xl transition-shadow duration-300"
+                        onClick={() => handleProductClick(product.productId)}
+                      >
+                        {/* Ảnh sản phẩm */}
+                        <img
+                          src={product.imageUrl}
+                          alt={product.name}
+                          className="w-full h-[180px] object-contain rounded-lg"
+                        />
+
+                        {/* Thông tin sản phẩm */}
+                        <div className="mt-2">
+                          <h3 className="text-sm font-bold">{product.name}</h3>
+                          <p className="text-xs text-gray-500">{product.brand}</p>
+                          <p className="text-xs text-gray-500 truncate">
+                            {product.description}
+                          </p>
+                          <span className="text-red-600 font-bold text-md">
+                            {product.price.toLocaleString()} VND
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+
+              </>
             ) : (
               <p className="text-gray-500 mt-4">
                 No products available for this category.

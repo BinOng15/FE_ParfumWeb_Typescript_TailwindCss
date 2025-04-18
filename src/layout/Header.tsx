@@ -1,22 +1,60 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ShoppingCartOutlined } from "@ant-design/icons";
 import React, { useState } from "react";
-import { Badge, Button, Avatar } from "antd"; // Thêm Avatar
+import { ShoppingCartOutlined } from "@ant-design/icons";
+import { Badge, Button, Avatar, message } from "antd";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux"; // Import useSelector và useDispatch
+import { useSelector, useDispatch } from "react-redux";
 import SignupModal from "../components/sigup/sigup";
 import LoginModal from "../components/login/login";
-import { message } from "antd";
 import { logout } from "../redux/authSlice";
+// import { axiosInstance } from "../services/axiosInstance";
+// import { OrderResponse } from "../components/models/Order";
 
 const CustomHeader: React.FC = () => {
   const [isLoginModalVisible, setIsLoginModalVisible] = useState(false);
   const [isSignupModalVisible, setIsSignupModalVisible] = useState(false);
+  // const [cartCount, setCartCount] = useState(0); // State để lưu số lượng đơn hàng "Cart"
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, } = useSelector((state: any) => state.auth); // Lấy trạng thái từ Redux
-  const { products } = useSelector((state: any) => state.cart);
+  const { isAuthenticated } = useSelector((state: any) => state.auth);
   const dispatch = useDispatch();
+
+  // Function to call API and fetch the number of "Cart" orders
+  // const fetchCartCount = async () => {
+  //   try {
+  //     const user = localStorage.getItem("user"); // Retrieve user data from local storage
+  //     if (!user) {
+  //       console.error("User data not found in localStorage");
+  //       //setCartCount(0); // Set cart count to 0 if user data is not found
+  //       return;
+  //     }
+  //     const parsedUser = JSON.parse(user); // Parse the user data to extract customerId
+  //     const customerId = parsedUser.customerId;
+  //     if (!customerId) {
+  //       console.error("Customer ID not found in user data");
+  //       //setCartCount(0); // Set cart count to 0 if customer ID is not found
+  //       return;
+  //     }
+  //     const response = await axiosInstance.get(`/order/cart/${customerId}`); // Updated endpoint to match expected API naming conventions
+  //     const cartItems = response.data || [];
+  //     //const count = cartItems.reduce((total: number, item: OrderResponse) => {
+  //       if (item.status === "Cart") {
+  //         return total + 1;
+  //       }
+  //       return total;
+  //     }, 0);
+  //     //setCartCount(count);
+  //   } catch (error) {
+  //     console.error("Error fetching cart data:", error); // Log error message
+  //     //setCartCount(0); // Set cart count to 0 in case of an error
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   if (isAuthenticated) {
+  //     fetchCartCount(); // Gọi API khi người dùng đã đăng nhập
+  //   }
+  // }, [isAuthenticated]);
 
   const showLoginModal = () => {
     setIsLoginModalVisible(true);
@@ -41,11 +79,7 @@ const CustomHeader: React.FC = () => {
     setIsLoginModalVisible(false);
   };
 
-  const handleSignup = (values: {
-    fullName: string;
-    email: string;
-    password: string;
-  }) => {
+  const handleSignup = (values: { fullName: string; email: string; password: string }) => {
     console.log("Đăng ký thành công với thông tin:", values);
     setIsSignupModalVisible(false);
   };
@@ -53,8 +87,10 @@ const CustomHeader: React.FC = () => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     dispatch(logout());
+    navigate("/login"); // Chuyển hướng về trang chủ sau khi đăng xuất
     message.success("Đăng xuất thành công!");
   };
+
   return (
     <>
       <header className="flex items-center justify-between px-6 py-4 bg-white shadow-xl">
@@ -70,15 +106,12 @@ const CustomHeader: React.FC = () => {
               }}
             >
               Eun de Parfum
-            </div></Link>
-
+            </div>
+          </Link>
         </div>
         <div className="flex items-center space-x-4">
-          {/* <Badge count={9} offset={[0, 0]} color="red">
-            <HeartOutlined className="text-lg cursor-pointer" />
-          </Badge> */}
           <Badge
-            count={products.length}
+            count={2} // Hiển thị số lượng đơn hàng "Cart"
             offset={[0, 0]}
             color="red"
             onClick={() => navigate(`/cart`)}
@@ -104,12 +137,14 @@ const CustomHeader: React.FC = () => {
             </>
           ) : (
             <>
-              <Avatar
-                src="/default.png" // Sử dụng URL hình ảnh mặc định
-                size={40} // Kích thước avatar (tương đương w-10 h-10)
-                className="cursor-pointer"
-                onClick={() => navigate("/profile")} // Điều hướng đến trang profile
-              />
+              <span title="Tài khoản">
+                <Avatar
+                  src="/default.png"
+                  size={40}
+                  className="cursor-pointer"
+                  onClick={() => navigate("/profile")}
+                />
+              </span>
               <Button
                 className="border-gray-300"
                 type="default"
