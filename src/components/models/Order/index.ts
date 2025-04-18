@@ -16,6 +16,11 @@ export interface OrderResponse {
     orderDetails: OrderDetailResponse[];
 }
 
+export interface CreateOrderFromCartRequest {
+    customerId: number;
+    orderDetailIds: number[];
+}
+
 export interface OrderDetailResponse {
     orderDetailId: number;
     orderId: number;
@@ -32,6 +37,7 @@ export interface AddToCartRequest {
 
 export interface ProductForOrder {
     productId: number;
+    productName: string;
     quantity: number;
     price: number;
 }
@@ -49,9 +55,9 @@ export interface UpdateCartItem {
 
 export interface CreateOrderRequest {
     customerId: number;
+    totalAmount: number;
+    status: string;
     products: ProductForOrder[];
-    status?: string;
-    isDeleted?: boolean;
 }
 
 export interface UpdateOrderRequest {

@@ -3,21 +3,11 @@ import React, { useState, useEffect } from "react";
 import { MinusOutlined, PlusOutlined, ShoppingCartOutlined } from "@ant-design/icons";
 import { Pagination, message } from "antd";
 import { useSelector } from "react-redux";
+import orderService from "../../services/orderService"; // Import orderService
 import { axiosInstance } from "../../services/axiosInstance";
-import { AxiosResponse } from "axios";
+import { AddToCartRequest } from "../../components/models/Order"; // Import AddToCartRequest
+import { ProductResponse } from "../../components/models/Product";
 
-interface ProductResponse {
-  productId: number;
-  name: string;
-  brand: string;
-  price: number;
-  stock: number;
-  description: string;
-  imageUrl: string;
-  createdAt: Date;
-  updatedAt: Date;
-  isDeleted: boolean;
-}
 
 interface BaseResponse<T> {
   data: T;
@@ -25,63 +15,14 @@ interface BaseResponse<T> {
   message: string;
 }
 
-interface OrderResponse {
-  orderId: number;
-  customerId: number;
-  totalAmount: number;
-  orderDate: string;
-  status: string;
-  isDeleted: boolean;
-  orderDetails: OrderDetailResponse[];
-}
-
-interface OrderDetailResponse {
-  orderDetailId: number;
-  orderId: number;
-  productId: number;
-  productName: string | null;
-  quantity: number;
-  unitPrice: number;
-}
-
-interface AddToCartRequest {
-  customerId: number;
-  products: ProductForOrder[];
-}
-
-interface ProductForOrder {
-  productId: number;
-  quantity: number;
-  price: number;
-}
-
 const getProductById = async (productId: number): Promise<BaseResponse<ProductResponse>> => {
   try {
     const response = await axiosInstance.get(`/product/getproductbyid?id=${productId}`);
-    return response.data;
-  } catch (error) {
-    console.error(`Error fetching product by ID ${productId}:`, error);
-    throw error;
-  }
-};
-
-const addToCart = async (data: AddToCartRequest): Promise<BaseResponse<OrderResponse>> => {
-  try {
-    console.log("Sending addToCart request with payload:", data); // Debug payload
-    const response: AxiosResponse<BaseResponse<OrderResponse>> = await axiosInstance.post(
-      "/order/add-to-cart",
-      data,
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    console.log("addToCart response:", response.data); // Debug response
+    console.log(`getProductById response for productId ${productId}:`, response.data);
     return response.data;
   } catch (error: any) {
-    console.error("Error adding to cart:", error.response?.data || error.message); // Debug error
-    throw error;
+    console.error(`Error fetching product by ID ${productId}:`, error.response?.data || error);
+    throw new Error(error.response?.data?.message || "Không thể lấy thông tin sản phẩm");
   }
 };
 
@@ -102,8 +43,9 @@ const PerfumeProductDetail: React.FC<{ productId: number }> = ({ productId }) =>
         setLoading(true);
         const response = await getProductById(productId);
         setProduct(response.data);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to fetch product:", error);
+        message.error(error.message || "Không thể tải thông tin sản phẩm!");
       } finally {
         setLoading(false);
       }
@@ -113,7 +55,7 @@ const PerfumeProductDetail: React.FC<{ productId: number }> = ({ productId }) =>
   }, [productId]);
 
   const handleAddToCart = async () => {
-    console.log("Auth state:", { isAuthenticated, customerId, roleName }); // Debug Redux state
+    console.log("Auth state:", { isAuthenticated, customerId, roleName });
 
     if (!isAuthenticated || !customerId) {
       message.error("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!");
@@ -125,26 +67,47 @@ const PerfumeProductDetail: React.FC<{ productId: number }> = ({ productId }) =>
       return;
     }
 
+    // Kiểm tra số lượng hợp lệ
+    if (quantity <= 0) {
+      message.warning("Số lượng phải lớn hơn 0!");
+      return;
+    }
+
+    // Kiểm tra tồn kho
+    if (product.stock <= 0) {
+      message.warning("Sản phẩm hiện đã hết hàng!");
+      return;
+    }
+    if (quantity > product.stock) {
+      message.warning(`Số lượng không thể vượt quá tồn kho (${product.stock})!`);
+      return;
+    }
+
     try {
       const request: AddToCartRequest = {
         customerId,
         products: [
           {
             productId: product.productId,
+            productName: product.name,
             quantity,
             price: product.price,
           },
         ],
       };
 
-      const response = await addToCart(request);
-      if (response.status === 200) {
+      console.log("Sending addToCart request with payload:", request);
+      const response = await orderService.addToCart(request);
+      console.log("addToCart response:", response);
+
+      if (response.success) {
         message.success("Thêm vào giỏ hàng thành công!");
       } else {
         message.error(response.message || "Không thể thêm vào giỏ hàng!");
       }
     } catch (error: any) {
-      message.error(error.response?.data?.message || "Lỗi khi thêm sản phẩm vào giỏ hàng!");
+      console.error("Error adding to cart:", error);
+      message.error(error.message || "Lỗi khi thêm sản phẩm vào giỏ hàng!");
     }
   };
 
@@ -217,7 +180,7 @@ const PerfumeProductDetail: React.FC<{ productId: number }> = ({ productId }) =>
               <p className="text-gray-700">
                 <strong>Tình trạng:</strong>{" "}
                 <span className={product.stock > 0 ? "text-green-600" : "text-red-600"}>
-                  {product.stock > 0 ? "còn hàng" : "hết hàng"}
+                  {product.stock > 0 ? `Còn ${product.stock} sản phẩm` : "Hết hàng"}
                 </span>
               </p>
 
@@ -230,6 +193,7 @@ const PerfumeProductDetail: React.FC<{ productId: number }> = ({ productId }) =>
                 <button
                   className="border px-3 py-2 rounded-l bg-gray-200 hover:bg-gray-300"
                   onClick={() => setQuantity(quantity > 1 ? quantity - 1 : 1)}
+                  disabled={quantity <= 1}
                 >
                   <MinusOutlined />
                 </button>
@@ -237,6 +201,7 @@ const PerfumeProductDetail: React.FC<{ productId: number }> = ({ productId }) =>
                 <button
                   className="border px-3 py-2 rounded-r bg-gray-200 hover:bg-gray-300"
                   onClick={() => setQuantity(quantity + 1)}
+                  disabled={product.stock <= quantity}
                 >
                   <PlusOutlined />
                 </button>
@@ -247,10 +212,14 @@ const PerfumeProductDetail: React.FC<{ productId: number }> = ({ productId }) =>
                 <button
                   className="border px-6 py-3 text-gray-800 bg-white hover:bg-gray-200 flex items-center rounded-md"
                   onClick={handleAddToCart}
+                  disabled={!product.stock}
                 >
                   <ShoppingCartOutlined className="mr-2" /> Thêm vào giỏ hàng
                 </button>
-                <button className="px-6 py-3 text-white bg-red-600 hover:bg-red-700 rounded-md">
+                <button
+                  className="px-6 py-3 text-white bg-red-600 hover:bg-red-700 rounded-md"
+                  disabled={!product.stock}
+                >
                   Mua ngay
                 </button>
               </div>

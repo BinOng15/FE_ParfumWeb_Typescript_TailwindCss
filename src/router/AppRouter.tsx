@@ -25,6 +25,7 @@ import ProductManagementPage from "../pages/admin/product/ProductManagementPage"
 import CategoryManagementPage from "../pages/admin/category/CategoryManagementPage";
 import ProductCategoryManagementPage from "../pages/admin/product-category/ProductCategoryManagementPage";
 import OrderManagementPage from "../pages/staff/order/OrderManagementPage";
+import PaymentSuccess from "../pages/customer/PaymentSuccess";
 
 
 interface ProtectedRouteProps {
@@ -98,6 +99,14 @@ const AppRoutes: React.FC = () => {
           element={
             <MainLayout>
               <Home />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/payment/success"
+          element={
+            <MainLayout>
+              <PaymentSuccess />
             </MainLayout>
           }
         />

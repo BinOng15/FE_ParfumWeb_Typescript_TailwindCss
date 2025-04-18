@@ -1,16 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
-import { Table, Input, Space, Row, Col, Modal, Descriptions, notification, Select } from "antd";
-import { ReloadOutlined, EyeOutlined, DeleteOutlined } from "@ant-design/icons";
+import { Table, Input, Space, Row, Col, Modal, Descriptions, notification, Button, Tooltip, Select } from "antd";
+import { ReloadOutlined, EyeOutlined, DollarOutlined, CheckCircleOutlined, SyncOutlined, CheckSquareOutlined, CloseCircleOutlined, StopOutlined } from "@ant-design/icons";
 import { ColumnType } from "antd/es/table";
 import orderService from "../../services/orderService";
+import customerService from "../../services/customerService";
 import { OrderResponse, GetAllOrderRequest } from "../models/Order";
+import { CustomerResponseData } from "../models/Customer";
 
 const { Search } = Input;
 const { Option } = Select;
 
 const OrderManagement: React.FC = () => {
     const [orders, setOrders] = useState<OrderResponse[]>([]);
+    const [customers, setCustomers] = useState<{ [key: number]: CustomerResponseData }>({});
     const [loading, setLoading] = useState(false);
     const [pagination, setPagination] = useState({
         current: 1,
@@ -20,8 +23,36 @@ const OrderManagement: React.FC = () => {
     const [searchKeyword, setSearchKeyword] = useState("");
     const [selectedOrder, setSelectedOrder] = useState<OrderResponse | null>(null);
     const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
+    const [filterStatus, setFilterStatus] = useState<string>(""); // Mặc định là "Tất cả"
 
-    const fetchOrders = async (page = 1, pageSize = 5, keyword = "") => {
+    const statusOptions = [
+        { value: "", label: "Tất cả" },
+        { value: "Cart", label: "Giỏ hàng" },
+        { value: "Paid", label: "Đã thanh toán" },
+        { value: "Confirmed", label: "Đã xác nhận" },
+        { value: "Processing", label: "Đang xử lý" },
+        { value: "Completed", label: "Hoàn thành" },
+        { value: "Cancelled", label: "Đã hủy" },
+        { value: "Rejected", label: "Đã từ chối" },
+    ];
+
+    // Chuẩn hóa trạng thái từ API
+    const normalizeStatus = (status: string | undefined): string => {
+        if (!status) return "Unknown";
+        const statusMap: { [key: string]: string } = {
+            cart: "Cart",
+            paid: "Paid",
+            confirmed: "Confirmed",
+            processing: "Processing",
+            completed: "Completed",
+            cancelled: "Cancelled",
+            rejected: "Rejected",
+            waitingforpaid: "Cart", // Ánh xạ WaitingForPaid về Cart
+        };
+        return statusMap[status.toLowerCase()] || "Unknown";
+    };
+
+    const fetchOrders = async (page = 1, pageSize = 5, statusFilter = filterStatus) => {
         setLoading(true);
         try {
             const data: GetAllOrderRequest = {
@@ -29,30 +60,87 @@ const OrderManagement: React.FC = () => {
                 pageSize: pageSize,
             };
             const response = await orderService.getAllOrders(data);
-            let orderData = response.pageData || [];
+            let orderData = (response.pageData || []).map(order => ({
+                ...order,
+                status: normalizeStatus(order.status),
+            }));
 
-            // Bộ lọc phía client: Tìm kiếm theo trạng thái
-            if (keyword && orderData.length > 0) {
-                const lowerKeyword = keyword.toLowerCase();
-                orderData = orderData.filter((order) =>
-                    (order.status?.toLowerCase() || "").includes(lowerKeyword)
-                );
+            // Debug trạng thái từ API và statusFilter
+            console.log("statusFilter:", statusFilter);
+            console.log("Order statuses:", orderData.map(order => order.status));
+
+            // Lọc phía client
+            if (orderData.length > 0) {
+                // Lọc theo trạng thái
+                if (statusFilter) {
+                    orderData = orderData.filter((order) => order.status === statusFilter);
+                }
+
+                // Lọc theo từ khóa (trạng thái hoặc tên khách hàng)
+                if (searchKeyword) {
+                    const lowerKeyword = searchKeyword.toLowerCase();
+                    orderData = orderData.filter((order) => {
+                        const customer = customers[order.customerId];
+                        const customerName = customer ? customer.name.toLowerCase() : "";
+                        const statusText = statusOptions.find(opt => opt.value === order.status)?.label.toLowerCase() || "";
+                        return (
+                            statusText.includes(lowerKeyword) ||
+                            customerName.includes(lowerKeyword)
+                        );
+                    });
+                }
             }
 
+            // Debug dữ liệu sau khi lọc
+            console.log("Filtered orders:", orderData);
+
+            // Lấy danh sách customerId duy nhất
+            const customerIds = [...new Set(orderData.map((order) => order.customerId))];
+
+            // Gọi API getCustomerById cho từng customerId
+            const customerPromises = customerIds.map(async (id) => {
+                try {
+                    return await customerService.getCustomerById(id);
+                } catch (error) {
+                    console.error(`Lỗi khi lấy khách hàng ${id}:`, error);
+                    return null;
+                }
+            });
+            const customerResults = await Promise.all(customerPromises);
+
+            // Lưu thông tin khách hàng vào state
+            const customerMap = customerResults.reduce((acc, customer) => {
+                if (customer) {
+                    acc[customer.customerId] = customer;
+                }
+                return acc;
+            }, {} as { [key: number]: CustomerResponseData });
+
+            setCustomers(customerMap);
             setOrders(orderData);
             setPagination({
                 current: page,
                 pageSize: pageSize,
-                total: response.pageInfo?.totalItem || orderData.length,
+                total: orderData.length, // Phản ánh số lượng sau lọc
             });
         } catch (error: any) {
             console.error("Lỗi lấy đơn hàng:", error);
             setOrders([]);
+            notification.error({
+                message: "Lỗi",
+                description: "Không thể tải danh sách đơn hàng.",
+            });
         } finally {
             setLoading(false);
         }
     };
 
+    // Gọi fetchOrders khi filterStatus hoặc searchKeyword thay đổi
+    useEffect(() => {
+        fetchOrders(1, pagination.pageSize, filterStatus);
+    }, [filterStatus, searchKeyword]);
+
+    // Khởi tạo dữ liệu lần đầu
     useEffect(() => {
         fetchOrders(pagination.current, pagination.pageSize);
     }, []);
@@ -60,17 +148,18 @@ const OrderManagement: React.FC = () => {
     const handleTableChange = (pagination: any) => {
         const { current, pageSize } = pagination;
         setPagination((prev) => ({ ...prev, current, pageSize }));
-        fetchOrders(current, pageSize, searchKeyword);
+        fetchOrders(current, pageSize, filterStatus);
     };
 
     const onSearch = (value: string) => {
         setSearchKeyword(value);
-        fetchOrders(1, pagination.pageSize, value);
+        // fetchOrders được gọi qua useEffect
     };
 
     const handleReset = () => {
         setSearchKeyword("");
-        fetchOrders(1, pagination.pageSize, "");
+        setFilterStatus("");
+        // fetchOrders được gọi qua useEffect
     };
 
     const showOrderDetails = (order: OrderResponse) => {
@@ -84,32 +173,24 @@ const OrderManagement: React.FC = () => {
     };
 
     const handleUpdateStatus = (order: OrderResponse, newStatus: string) => {
+        const statusText = getStatusStyle(newStatus).props.children;
         Modal.confirm({
             title: "Xác nhận cập nhật trạng thái",
-            content: `Bạn có chắc chắn muốn thay đổi trạng thái đơn hàng thành "${newStatus}"?`,
+            content: `Bạn có chắc chắn muốn thay đổi trạng thái đơn hàng thành "${statusText}"?`,
             okText: "Cập nhật",
             okType: "primary",
             cancelText: "Hủy",
             onOk: async () => {
                 try {
-                    const updateData: any = {
-                        customerId: order.customerId,
-                        products: order.orderDetails.map(detail => ({
-                            productId: detail.productId,
-                            quantity: detail.quantity,
-                            price: detail.unitPrice,
-                        })),
-                        status: newStatus,
-                    };
-                    const response = await orderService.updateOrder(order.orderId, updateData);
-                    if (response.Success) {
+                    const response = await orderService.updateOrderStatus(order.orderId, newStatus);
+                    if (response.success) {
                         notification.success({
                             message: "Thành công",
-                            description: "Cập nhật trạng thái đơn hàng thành công!",
+                            description: `Cập nhật trạng thái đơn hàng thành "${statusText}" thành công!`,
                         });
-                        fetchOrders(pagination.current, pagination.pageSize, searchKeyword);
+                        fetchOrders(pagination.current, pagination.pageSize, filterStatus);
                     } else {
-                        throw new Error(response.Message || "Không thể cập nhật trạng thái!");
+                        throw new Error(response.message || "Không thể cập nhật trạng thái!");
                     }
                 } catch (error: any) {
                     notification.error({
@@ -121,46 +202,154 @@ const OrderManagement: React.FC = () => {
         });
     };
 
-    const handleDeleteOrder = (order: OrderResponse) => {
-        Modal.confirm({
-            title: "Xác nhận xóa",
-            content: `Bạn có chắc chắn muốn ${order.isDeleted ? "khôi phục" : "xóa"} đơn hàng?`,
-            okText: order.isDeleted ? "Khôi phục" : "Xóa",
-            okType: order.isDeleted ? "primary" : "danger",
-            cancelText: "Hủy",
-            onOk: async () => {
-                try {
-                    const response = await orderService.deleteOrder(order.orderId, !order.isDeleted);
-                    if (response.Success) {
-                        notification.success({
-                            message: "Thành công",
-                            description: order.isDeleted
-                                ? "Khôi phục đơn hàng thành công!"
-                                : "Xóa đơn hàng thành công!",
-                        });
-                        fetchOrders(pagination.current, pagination.pageSize, searchKeyword);
-                    } else {
-                        throw new Error(response.Message || "Không thể thực hiện hành động!");
-                    }
-                } catch (error: any) {
-                    notification.error({
-                        message: "Lỗi",
-                        description: error.message || "Không thể thực hiện hành động!",
-                    });
-                }
-            },
-        });
+    // const handleDeleteOrder = (order: OrderResponse) => {
+    //     Modal.confirm({
+    //         title: "Xác nhận xóa",
+    //         content: `Bạn có chắc chắn muốn ${order.isDeleted ? "khôi phục" : "xóa"} đơn hàng?`,
+    //         okText: order.isDeleted ? "Khôi phục" : "Xóa",
+    //         okType: order.isDeleted ? "primary" : "danger",
+    //         cancelText: "Hủy",
+    //         onOk: async () => {
+    //             try {
+    //                 const response = await orderService.deleteOrder(order.orderId, !order.isDeleted);
+    //                 if (response.Success) {
+    //                     notification.success({
+    //                         message: "Thành công",
+    //                         description: order.isDeleted
+    //                             ? "Khôi phục đơn hàng thành công!"
+    //                             : "Xóa đơn hàng thành công!",
+    //                     });
+    //                     fetchOrders(pagination.current, pagination.pageSize, filterStatus);
+    //                 } else {
+    //                     throw new Error(response.Message || "Không thể thực hiện hành động!");
+    //                 }
+    //             } catch (error: any) {
+    //                 notification.error({
+    //                     message: "Lỗi",
+    //                     description: error.message || "Không thể thực hiện hành động!",
+    //                 });
+    //             }
+    //         },
+    //     });
+    // };
+
+    // Hàm hiển thị trạng thái với text và style
+    const getStatusStyle = (status: string) => {
+        let text = "";
+        let style = {};
+
+        switch (status) {
+            case "Cart":
+                text = "Giỏ hàng";
+                style = {
+                    color: "#00474f",
+                    backgroundColor: "#e6fffb",
+                    padding: "2px 8px",
+                    borderRadius: "4px",
+                };
+                break;
+            case "Paid":
+                text = "Đã thanh toán";
+                style = {
+                    color: "#1890ff",
+                    backgroundColor: "#e6f7ff",
+                    padding: "2px 8px",
+                    borderRadius: "4px",
+                };
+                break;
+            case "Confirmed":
+                text = "Đã xác nhận";
+                style = {
+                    color: "#722ed1",
+                    backgroundColor: "#f9f0ff",
+                    padding: "2px 8px",
+                    borderRadius: "4px",
+                };
+                break;
+            case "Processing":
+                text = "Đang xử lý";
+                style = {
+                    color: "#fa8c16",
+                    backgroundColor: "#fff7e6",
+                    padding: "2px 8px",
+                    borderRadius: "4px",
+                };
+                break;
+            case "Completed":
+                text = "Hoàn thành";
+                style = {
+                    color: "#52c41a",
+                    backgroundColor: "#f6ffed",
+                    padding: "2px 8px",
+                    borderRadius: "4px",
+                };
+                break;
+            case "Cancelled":
+                text = "Đã hủy";
+                style = {
+                    color: "#ff4d4f",
+                    backgroundColor: "#fff1f0",
+                    padding: "2px 8px",
+                    borderRadius: "4px",
+                };
+                break;
+            case "Rejected":
+                text = "Đã từ chối";
+                style = {
+                    color: "#a8071a",
+                    backgroundColor: "#fff1f0",
+                    padding: "2px 8px",
+                    borderRadius: "4px",
+                };
+                break;
+            default:
+                text = "Không xác định";
+                style = {
+                    color: "#000",
+                    backgroundColor: "#f5f5f5",
+                    padding: "2px 8px",
+                    borderRadius: "4px",
+                };
+        }
+
+        return <span style={style}>{text}</span>;
     };
 
-    const statusOptions = [
-        "Cart",
-        "Paid",
-        "Confirmed",
-        "Processing",
-        "Shipped",
-        "Cancelled",
-        "Rejected",
-    ];
+    // Định nghĩa các trạng thái có thể chuyển đổi và icon tương ứng
+    const getAvailableStatuses = (currentStatus: string) => {
+        switch (currentStatus) {
+            case "Cart":
+                return [
+                    { status: "Paid", icon: <DollarOutlined />, tooltip: "Chuyển sang Đã thanh toán" },
+                    { status: "Cancelled", icon: <CloseCircleOutlined />, tooltip: "Hủy đơn hàng" },
+                    { status: "Rejected", icon: <StopOutlined />, tooltip: "Từ chối đơn hàng" },
+                ];
+            case "Paid":
+                return [
+                    { status: "Confirmed", icon: <CheckCircleOutlined />, tooltip: "Xác nhận đơn hàng" },
+                    { status: "Cancelled", icon: <CloseCircleOutlined />, tooltip: "Hủy đơn hàng" },
+                    { status: "Rejected", icon: <StopOutlined />, tooltip: "Từ chối đơn hàng" },
+                ];
+            case "Confirmed":
+                return [
+                    { status: "Processing", icon: <SyncOutlined />, tooltip: "Đang xử lý" },
+                    { status: "Cancelled", icon: <CloseCircleOutlined />, tooltip: "Hủy đơn hàng" },
+                    { status: "Rejected", icon: <StopOutlined />, tooltip: "Từ chối đơn hàng" },
+                ];
+            case "Processing":
+                return [
+                    { status: "Completed", icon: <CheckSquareOutlined />, tooltip: "Hoàn thành đơn hàng" },
+                    { status: "Cancelled", icon: <CloseCircleOutlined />, tooltip: "Hủy đơn hàng" },
+                    { status: "Rejected", icon: <StopOutlined />, tooltip: "Từ chối đơn hàng" },
+                ];
+            case "Completed":
+            case "Cancelled":
+            case "Rejected":
+                return [];
+            default:
+                return [];
+        }
+    };
 
     const columns: ColumnType<OrderResponse>[] = [
         {
@@ -173,8 +362,11 @@ const OrderManagement: React.FC = () => {
         },
         {
             title: "Tên khách hàng",
-            dataIndex: "customerId",
-            key: "customerId",
+            key: "customerName",
+            render: (_: any, record: OrderResponse) => {
+                const customer = customers[record.customerId];
+                return customer ? customer.name : "Đang tải...";
+            },
         },
         {
             title: "Tổng tiền",
@@ -202,45 +394,38 @@ const OrderManagement: React.FC = () => {
             title: "Trạng thái",
             dataIndex: "status",
             key: "status",
-            render: (status: string, record: OrderResponse) => (
-                <Select
-                    value={status || "Unknown"}
-                    onChange={(value) => handleUpdateStatus(record, value)}
-                    style={{ width: 120 }}
-                >
-                    {statusOptions.map((option) => (
-                        <Option key={option} value={option}>
-                            {option}
-                        </Option>
-                    ))}
-                </Select>
-            ),
-        },
-        {
-            title: "Trạng thái xóa",
-            dataIndex: "isDeleted",
-            key: "isDeleted",
-            render: (isDeleted: boolean) => (
-                <span>{isDeleted ? "Đã xóa" : "Hoạt động"}</span>
-            ),
+            render: (status: string) => getStatusStyle(status),
         },
         {
             title: "Hành động",
             key: "action",
-            render: (_: any, record: OrderResponse) => (
-                <Space>
-                    <EyeOutlined
-                        onClick={() => showOrderDetails(record)}
-                        style={{ color: "blue", cursor: "pointer", fontSize: "18px" }}
-                        title="Xem chi tiết"
-                    />
-                    <DeleteOutlined
-                        onClick={() => handleDeleteOrder(record)}
-                        style={{ color: record.isDeleted ? "green" : "red", cursor: "pointer", fontSize: "18px" }}
-                        title={record.isDeleted ? "Khôi phục" : "Xóa"}
-                    />
-                </Space>
-            ),
+            render: (_: any, record: OrderResponse) => {
+                const availableStatuses = getAvailableStatuses(record.status);
+                return (
+                    <Space>
+                        <EyeOutlined
+                            onClick={() => showOrderDetails(record)}
+                            style={{ color: "blue", cursor: "pointer", fontSize: "18px" }}
+                            title="Xem chi tiết"
+                        />
+                        {/* <DeleteOutlined
+                            onClick={() => handleDeleteOrder(record)}
+                            style={{ color: record.isDeleted ? "green" : "red", cursor: "pointer", fontSize: "18px" }}
+                            title={record.isDeleted ? "Khôi phục" : "Xóa"}
+                        /> */}
+                        {availableStatuses.map(({ status, icon, tooltip }) => (
+                            <Tooltip key={status} title={tooltip}>
+                                <Button
+                                    type="text"
+                                    icon={icon}
+                                    onClick={() => handleUpdateStatus(record, status)}
+                                    style={{ color: getStatusStyle(status).props.style.color, fontSize: "18px" }}
+                                />
+                            </Tooltip>
+                        ))}
+                    </Space>
+                );
+            },
         },
     ];
 
@@ -249,23 +434,40 @@ const OrderManagement: React.FC = () => {
             <h2 className="text-2xl font-bold text-center p-2 rounded-t-lg">
                 QUẢN LÝ ĐƠN HÀNG
             </h2>
-            {!loading && orders.length === 0 && <p>Không có đơn hàng nào.</p>}
-            <Row justify="space-between" style={{ marginBottom: 16, marginTop: 24 }}>
-                <Col>
-                    <Space>
-                        <Search
-                            placeholder="Tìm kiếm theo trạng thái"
-                            onSearch={onSearch}
-                            enterButton
-                            allowClear
-                            value={searchKeyword}
-                            onChange={(e) => setSearchKeyword(e.target.value)}
-                        />
-                        <ReloadOutlined
-                            onClick={handleReset}
-                            style={{ fontSize: "24px", cursor: "pointer" }}
-                        />
-                    </Space>
+            <Row gutter={[16, 16]} style={{ marginBottom: 16, marginTop: 24 }}>
+                <Col xs={24} sm={12} md={6}>
+                    <Search
+                        placeholder="Tìm kiếm theo trạng thái hoặc tên khách hàng"
+                        onSearch={onSearch}
+                        enterButton
+                        allowClear
+                        value={searchKeyword}
+                        onChange={(e) => setSearchKeyword(e.target.value)}
+                    />
+                </Col>
+                <Col xs={24} sm={12} md={4}>
+                    <Select
+                        placeholder="Chọn trạng thái"
+                        style={{ width: "100%" }}
+                        value={filterStatus}
+                        onChange={(value) => {
+                            console.log("Selected status:", value);
+                            setFilterStatus(value);
+                        }}
+                    >
+                        {statusOptions.map((option) => (
+                            <Option key={option.value} value={option.value}>
+                                {option.label}
+                            </Option>
+                        ))}
+                    </Select>
+                </Col>
+                <Col xs={24} sm={12} md={2}>
+                    <ReloadOutlined
+                        onClick={handleReset}
+                        style={{ fontSize: "24px", cursor: "pointer" }}
+                        title="Xóa bộ lọc"
+                    />
                 </Col>
             </Row>
             <Table
@@ -284,15 +486,18 @@ const OrderManagement: React.FC = () => {
             />
             <Modal
                 title="Chi tiết đơn hàng"
-                visible={isDetailModalVisible}
+                open={isDetailModalVisible}
                 onCancel={handleDetailModalClose}
                 footer={null}
                 width={800}
-                bodyStyle={{ maxHeight: "60vh", overflowY: "auto" }}
+                styles={{ body: { maxHeight: "60vh", overflowY: "auto" } }}
             >
                 {selectedOrder && (
                     <>
                         <Descriptions column={1} bordered>
+                            <Descriptions.Item label="Tên khách hàng">
+                                {customers[selectedOrder.customerId]?.name || "Không xác định"}
+                            </Descriptions.Item>
                             <Descriptions.Item label="Tổng tiền">
                                 {selectedOrder.totalAmount.toLocaleString("vi-VN")} VNĐ
                             </Descriptions.Item>
@@ -304,10 +509,7 @@ const OrderManagement: React.FC = () => {
                                 })}
                             </Descriptions.Item>
                             <Descriptions.Item label="Trạng thái">
-                                {selectedOrder.status || "Unknown"}
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Trạng thái xóa">
-                                {selectedOrder.isDeleted ? "Đã xóa" : "Hoạt động"}
+                                {getStatusStyle(selectedOrder.status)}
                             </Descriptions.Item>
                         </Descriptions>
                         <h3 style={{ marginTop: 16, marginBottom: 8 }}>Chi tiết sản phẩm</h3>

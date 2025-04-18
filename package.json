@@ -14,6 +14,7 @@
     "@reduxjs/toolkit": "^2.6.0",
     "antd": "^5.23.1",
     "axios": "^1.8.1",
+    "moment": "^2.30.1",
     "perfume": "file:",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

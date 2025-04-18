@@ -11,15 +11,16 @@ import {
     GetAllOrderRequest,
     UpdateOrderDetailRequest,
     OrderDetailResponse,
+    CreateOrderFromCartRequest,
 } from "../components/models/Order";
 
 const orderService = {
     // Thêm sản phẩm vào giỏ hàng
     addToCart: async (
         data: AddToCartRequest
-    ): Promise<BaseResponse<OrderResponse>> => {
+    ) => {
         try {
-            const response: AxiosResponse<BaseResponse<OrderResponse>> =
+            const response =
                 await axiosInstance.post("/order/add-to-cart", data, {
                     headers: {
                         "Content-Type": "application/json",
@@ -35,9 +36,9 @@ const orderService = {
     // Cập nhật giỏ hàng
     updateCart: async (
         data: UpdateCartRequest
-    ): Promise<BaseResponse<OrderResponse>> => {
+    ) => {
         try {
-            const response: AxiosResponse<BaseResponse<OrderResponse>> =
+            const response =
                 await axiosInstance.put("/order/update-cart", data, {
                     headers: {
                         "Content-Type": "application/json",
@@ -56,7 +57,7 @@ const orderService = {
     ): Promise<BaseResponse<OrderResponse>> => {
         try {
             const response: AxiosResponse<BaseResponse<OrderResponse>> =
-                await axiosInstance.post("/order", data, {
+                await axiosInstance.post("/order/create", data, {
                     headers: {
                         "Content-Type": "application/json",
                     },
@@ -64,6 +65,15 @@ const orderService = {
             return response.data;
         } catch (error) {
             console.error("Error creating order:", error);
+            throw error;
+        }
+    },
+    removeCartItems: async (data: { customerId: number; orderDetailIds: number[] }) => {
+        try {
+            const response = await axiosInstance.post("/order/remove-cart-items", data);
+            return response.data;
+        } catch (error) {
+            console.error("Error removing cart items:", error);
             throw error;
         }
     },
@@ -86,17 +96,23 @@ const orderService = {
             throw error;
         }
     },
+    updateOrderStatus: async (orderId: number, newStatus: string) => {
+        try {
+            const response = await axiosInstance.put(`/order/update-status/${orderId}`, newStatus);
+            return response.data;
+        } catch (error) {
+            console.error(`Lỗi khi cập nhật trạng thái đơn hàng ${orderId}:`, error);
+            throw error;
+        }
+    },
 
     // Xóa (hoặc khôi phục) đơn hàng
     deleteOrder: async (
         orderId: number,
         status: boolean
-    ): Promise<BaseResponse<OrderResponse>> => {
+    ) => {
         try {
-            const response: AxiosResponse<BaseResponse<OrderResponse>> =
-                await axiosInstance.delete(`/order/${orderId}`, {
-                    params: { status },
-                });
+            const response = await axiosInstance.delete(`/order/${orderId}?status=${status}`);
             return response.data;
         } catch (error) {
             console.error(`Error deleting order ${orderId}:`, error);
@@ -105,9 +121,9 @@ const orderService = {
     },
 
     // Lấy đơn hàng theo ID
-    getOrderById: async (orderId: number): Promise<OrderResponse> => {
+    getOrderById: async (orderId: number) => {
         try {
-            const response: AxiosResponse<BaseResponse<OrderResponse>> =
+            const response =
                 await axiosInstance.get(`/order/${orderId}`);
             return response.data.Data;
         } catch (error) {
@@ -115,7 +131,16 @@ const orderService = {
             throw error;
         }
     },
-
+    getOrderByCustomerId: async (customerId: number) => {
+        try {
+            const response =
+                await axiosInstance.get(`/order/getbycustomerid/${customerId}`);
+            return response.data.Data;
+        } catch (error) {
+            console.error(`Error fetching order by customer ID ${customerId}:`, error);
+            throw error;
+        }
+    },
     // Lấy tất cả đơn hàng (phân trang)
     getAllOrders: async (
         data: GetAllOrderRequest
@@ -164,6 +189,30 @@ const orderService = {
             throw error;
         }
     },
+    createOrderFromCart: async (
+        data: CreateOrderFromCartRequest) => {
+        try {
+            const response =
+                await axiosInstance.post("/order/create-from-cart", data, {
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                });
+            return response.data;
+        } catch (error) {
+            console.error("Error creating order from cart:", error);
+            throw error;
+        }
+    },
+    getCartByCustomerId: async (customerId: number) => {
+        try {
+            const response = await axiosInstance.get(`/order/getcart/${customerId}`);
+            return response.data;
+        } catch (error) {
+            console.error(`Error fetching cart by customer ID ${customerId}:`, error);
+            throw error;
+        }
+    }
 };
 
 export default orderService;

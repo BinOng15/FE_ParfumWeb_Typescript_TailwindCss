@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ShoppingCartOutlined, HeartOutlined } from "@ant-design/icons";
+import { ShoppingCartOutlined } from "@ant-design/icons";
 import React, { useState } from "react";
 import { Badge, Button, Avatar } from "antd"; // Thêm Avatar
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -67,9 +67,9 @@ const CustomHeader: React.FC = () => {
           />
         </div>
         <div className="flex items-center space-x-4">
-          <Badge count={9} offset={[0, 0]} color="red">
+          {/* <Badge count={9} offset={[0, 0]} color="red">
             <HeartOutlined className="text-lg cursor-pointer" />
-          </Badge>
+          </Badge> */}
           <Badge
             count={products.length}
             offset={[0, 0]}

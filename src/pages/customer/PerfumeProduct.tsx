@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Breadcrumb, Input, Pagination, Select } from "antd";
+import { Breadcrumb, Input, Pagination } from "antd";
 import { SearchOutlined, HeartOutlined, ShoppingCartOutlined } from "@ant-design/icons";
 import { axiosInstance } from "../../services/axiosInstance";
 import { useNavigate } from "react-router-dom";
@@ -316,12 +316,12 @@ const PerfumeProduct: React.FC = () => {
       {/* Bộ lọc & Tìm kiếm */}
       <div className="flex justify-between items-center bg-gray-100 p-4 rounded-lg">
         <div className="flex space-x-3">
-          <Select
+          {/* <Select
             placeholder="Nhóm Hương"
             className="w-40 bg-gray-50 border-gray-300"
             onChange={(value) => value}
             allowClear
-          ></Select>
+          ></Select> */}
           <button
             className={`px-4 py-2 rounded-full text-sm font-semibold ${selectedCategory === null ? "bg-black text-white" : "bg-white text-gray-700"
               }`}
