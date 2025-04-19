@@ -7,6 +7,7 @@ import orderService from "../../services/orderService"; // Import orderService
 import { axiosInstance } from "../../services/axiosInstance";
 import { AddToCartRequest } from "../../components/models/Order"; // Import AddToCartRequest
 import { ProductResponse } from "../../components/models/Product";
+import { useNavigate } from "react-router-dom";
 
 
 interface BaseResponse<T> {
@@ -36,6 +37,7 @@ const PerfumeProductDetail: React.FC<{ productId: number }> = ({ productId }) =>
   const { isAuthenticated, user } = useSelector((state: any) => state.auth);
   const customerId = user?.customerId;
   const roleName = user?.roleName;
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -53,6 +55,10 @@ const PerfumeProductDetail: React.FC<{ productId: number }> = ({ productId }) =>
 
     fetchProduct();
   }, [productId]);
+
+  const handleBuyNow = async () => {
+    navigate("/cart");
+  }
 
   const handleAddToCart = async () => {
     console.log("Auth state:", { isAuthenticated, customerId, roleName });
@@ -219,6 +225,7 @@ const PerfumeProductDetail: React.FC<{ productId: number }> = ({ productId }) =>
                 <button
                   className="px-6 py-3 text-white bg-red-600 hover:bg-red-700 rounded-md"
                   disabled={!product.stock}
+                  onClick={handleBuyNow}
                 >
                   Mua ngay
                 </button>

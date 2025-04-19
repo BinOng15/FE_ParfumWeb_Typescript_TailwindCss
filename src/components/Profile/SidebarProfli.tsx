@@ -37,7 +37,6 @@ const Sidebar = () => {
             {/* Avatar và tên */}
             <div className="flex flex-col items-center mb-6">
                 <Avatar size={64} src="/default.png" />
-                <h3 className="mt-2 font-semibold">Dư Trần Vĩnh Hưng</h3>
             </div>
             {/* Danh sách menu */}
             <ul className="space-y-2">

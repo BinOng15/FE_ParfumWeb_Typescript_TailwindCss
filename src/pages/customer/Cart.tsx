@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
 import { message, Spin, Button, notification, Modal, Select, Checkbox } from "antd";
-import { useSelector } from "react-redux";
 import orderService from "../../services/orderService";
 import paymentService from "../../services/paymentService";
 import { UpdateCartRequest } from "../../components/models/Order";
@@ -36,7 +35,6 @@ interface CartItem {
   product: ProductResponse;
 }
 
-
 const getProductById = async (productId: number): Promise<ProductResponse | null> => {
   try {
     const response = await axiosInstance.get(`/product/getproductbyid?id=${productId}`);
@@ -54,9 +52,13 @@ const Cart: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [updating, setUpdating] = useState<number | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"banking" | "cash">("banking");
-  const { isAuthenticated, user } = useSelector((state: any) => state.auth);
-  const customerId = user?.customerId;
   const navigate = useNavigate();
+
+  // Lấy thông tin user từ localStorage
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const customerId = user?.customerId;
+  const address = user?.address;
+  const isAuthenticated = !!user && !!customerId;
 
   useEffect(() => {
     console.log("Auth state in Cart:", { isAuthenticated, customerId });
@@ -138,13 +140,11 @@ const Cart: React.FC = () => {
       (item) => item.orderDetail.orderDetailId === orderDetail.orderDetailId
     )?.product;
 
-    // Kiểm tra tồn kho
     if (product && newQuantity > product.stock && product.stock > 0) {
       message.warning(`Số lượng không thể vượt quá tồn kho (${product.stock})!`);
       return;
     }
 
-    // Nếu số lượng giảm xuống 0, hiển thị modal xác nhận
     if (newQuantity === 0) {
       Modal.confirm({
         title: "Bạn chắc chắn muốn bỏ sản phẩm này?",
@@ -201,7 +201,6 @@ const Cart: React.FC = () => {
       return;
     }
 
-    // Xử lý các trường hợp số lượng > 0
     if (newQuantity < 0) {
       message.warning("Số lượng không hợp lệ!");
       return;
@@ -293,12 +292,18 @@ const Cart: React.FC = () => {
       return;
     }
 
+    if (!address) {
+      message.warning("Vui lòng cập nhật địa chỉ giao hàng trước khi thanh toán!");
+      navigate("/profile");
+      return;
+    }
+
     setLoading(true);
     try {
-      // Tạo Order mới từ các sản phẩm được chọn
       const createOrderData = {
         customerId: customerId,
         orderDetailIds: selectedItems,
+        shippingAddress: address,
       };
       console.log("Sending createFromCart request with payload:", createOrderData);
       const orderResponse = await orderService.createOrderFromCart(createOrderData);
@@ -310,7 +315,6 @@ const Cart: React.FC = () => {
 
       const newOrderId = orderResponse.data.orderId;
 
-      // Tạo thanh toán
       const paymentRequest: CreatePaymentRequest = {
         orderId: newOrderId,
         paymentMethod: paymentMethod,
@@ -320,7 +324,6 @@ const Cart: React.FC = () => {
       console.log("createPayment response:", paymentResponse);
 
       if (paymentResponse.success && paymentResponse.data) {
-        // Xóa các sản phẩm đã thanh toán khỏi giỏ hàng
         try {
           const removeResponse = await orderService.removeCartItems({
             customerId: customerId,
@@ -340,7 +343,6 @@ const Cart: React.FC = () => {
           message.warning("Đã thanh toán nhưng không thể cập nhật giỏ hàng!");
         }
 
-        // Xử lý thanh toán
         if (paymentMethod === "banking" && paymentResponse.data.checkoutUrl) {
           localStorage.setItem("Paid", newOrderId.toString());
           window.location.href = paymentResponse.data.checkoutUrl;
@@ -380,8 +382,22 @@ const Cart: React.FC = () => {
         <h1 className="text-4xl font-bold">Giỏ hàng của bạn</h1>
       </header>
 
-      {/* Container chính */}
+      {/* Phần hiển thị địa chỉ giao hàng */}
       <div className="p-6 max-w-7xl mx-auto">
+        <div className="mb-6">
+          <h2 className="text-2xl font-semibold text-gray-700">Địa chỉ giao hàng</h2>
+          {address ? (
+            <p className="text-lg text-gray-600">{address}</p>
+          ) : (
+            <p className="text-lg text-red-500">
+              Chưa có địa chỉ giao hàng.{" "}
+              <a href="/profile" className="text-blue-500 underline">
+                Cập nhật ngay
+              </a>
+            </p>
+          )}
+        </div>
+
         {cartItems.length > 0 ? (
           <div>
             {/* Thanh tiêu đề cột */}
@@ -492,7 +508,6 @@ const Cart: React.FC = () => {
           </div>
         ) : (
           <p className="text-center text-lg">Giỏ hàng của bạn trống!</p>
-
         )}
       </div>
     </div>
