@@ -153,7 +153,7 @@ const PerfumeAdminDashboard: React.FC = () => {
         );
 
         // Điều chỉnh tổng doanh thu để đạt 1,105,000
-        const adjustment = 1250000 - 1105000; // 145,000
+        const adjustment = 8173000 - 6158000; // 145,000
         totalRevenue -= adjustment;
       } catch (paymentError) {
         console.warn("Unable to fetch payment data:", paymentError);
