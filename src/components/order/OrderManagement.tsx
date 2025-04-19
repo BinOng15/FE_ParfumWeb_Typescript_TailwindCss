@@ -90,7 +90,7 @@ const OrderManagement: React.FC = () => {
             setPagination({
                 current: page,
                 pageSize: pageSize,
-                total: response.pageInfo?.totalItem || orderData.length, // Sử dụng totalItem từ API
+                total: response.pageInfo?.totalItem || orderData.length,
             });
         } catch (error: any) {
             console.error("Lỗi lấy đơn hàng:", error);
@@ -303,6 +303,14 @@ const OrderManagement: React.FC = () => {
             },
         },
         {
+            title: "Địa chỉ giao hàng",
+            key: "address",
+            render: (_: any, record: OrderResponse) => {
+                const customer = customers[record.customerId];
+                return customer && customer.address ? customer.address : "Chưa cung cấp";
+            },
+        },
+        {
             title: "Tổng tiền",
             dataIndex: "totalAmount",
             key: "totalAmount",
@@ -426,6 +434,9 @@ const OrderManagement: React.FC = () => {
                         <Descriptions column={1} bordered>
                             <Descriptions.Item label="Tên khách hàng">
                                 {customers[selectedOrder.customerId]?.name || "Không xác định"}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Địa chỉ giao hàng">
+                                {customers[selectedOrder.customerId]?.address || "Chưa cung cấp"}
                             </Descriptions.Item>
                             <Descriptions.Item label="Tổng tiền">
                                 {selectedOrder.totalAmount.toLocaleString("vi-VN")} VNĐ
