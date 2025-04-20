@@ -63,11 +63,6 @@ const ProtectedRouter = ({ element, allowedRoles }: ProtectedRouteProps) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (!user || !user.roleName) {
-    console.log("No user or roleName, redirecting to /login");
-    return <Navigate to="/login" replace />;
-  }
-
   if (allowedRoles && !allowedRoles.includes(user.roleName)) {
     console.log(`Role ${user.roleName} not allowed, redirecting to /`);
     return <Navigate to="/" replace />;
