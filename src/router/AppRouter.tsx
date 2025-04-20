@@ -51,7 +51,7 @@ const ProtectedRouter = ({ element, allowedRoles }: ProtectedRouteProps) => {
 
   if (!storedUser) {
     console.log("No stored user, redirecting to /login");
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   let user;
@@ -60,7 +60,7 @@ const ProtectedRouter = ({ element, allowedRoles }: ProtectedRouteProps) => {
     console.log("Parsed user:", user); // Debug
   } catch (error) {
     console.error("Error parsing user from sessionStorage:", error);
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   if (allowedRoles && !allowedRoles.includes(user.roleName)) {
