@@ -344,7 +344,6 @@ const Cart: React.FC = () => {
         }
 
         if (paymentMethod === "banking" && paymentResponse.data.checkoutUrl) {
-          localStorage.setItem("Paid", newOrderId.toString());
           window.location.href = paymentResponse.data.checkoutUrl;
         } else if (paymentMethod === "cash") {
           notification.success({
