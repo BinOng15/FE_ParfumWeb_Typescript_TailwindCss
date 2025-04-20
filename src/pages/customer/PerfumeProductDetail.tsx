@@ -57,8 +57,13 @@ const PerfumeProductDetail: React.FC<{ productId: number }> = ({ productId }) =>
   }, [productId]);
 
   const handleBuyNow = async () => {
+    if (!isAuthenticated || !customerId) {
+      message.error("Bạn cần đăng nhập trước khi mua hàng!");
+      navigate("/login");
+      return;
+    }
     navigate("/cart");
-  }
+  };
 
   const handleAddToCart = async () => {
     console.log("Auth state:", { isAuthenticated, customerId, roleName });
