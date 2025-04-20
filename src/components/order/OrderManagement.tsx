@@ -7,6 +7,7 @@ import orderService from "../../services/orderService";
 import customerService from "../../services/customerService";
 import { OrderResponse, GetAllOrderRequest } from "../models/Order";
 import { CustomerResponseData } from "../models/Customer";
+import productService from "../../services/productService";
 
 const { Search } = Input;
 const { Option } = Select;
@@ -104,6 +105,24 @@ const OrderManagement: React.FC = () => {
         }
     };
 
+    const fetchProductDetails = async (orderDetails: any[]) => {
+        const updatedDetails = await Promise.all(
+            orderDetails.map(async (detail) => {
+                try {
+                    const product = await productService.getProductById(detail.productId);
+                    return {
+                        ...detail,
+                        imageUrl: product.imageUrl, // Thêm URL hình ảnh từ API
+                    };
+                } catch (error) {
+                    console.error(`Error fetching product ${detail.productId}:`, error);
+                    return detail; // Giữ nguyên nếu có lỗi
+                }
+            })
+        );
+        return updatedDetails;
+    };
+
     useEffect(() => {
         fetchOrders(1, pagination.pageSize);
     }, [filterStatus, searchKeyword]);
@@ -129,9 +148,18 @@ const OrderManagement: React.FC = () => {
         fetchOrders(1, pagination.pageSize);
     };
 
-    const showOrderDetails = (order: OrderResponse) => {
-        setSelectedOrder(order);
-        setIsDetailModalVisible(true);
+    const showOrderDetails = async (order: OrderResponse) => {
+        try {
+            const updatedOrderDetails = await fetchProductDetails(order.orderDetails);
+            setSelectedOrder({ ...order, orderDetails: updatedOrderDetails });
+            setIsDetailModalVisible(true);
+        } catch (error) {
+            console.error("Error fetching product details:", error);
+            notification.error({
+                message: "Lỗi",
+                description: "Không thể tải chi tiết sản phẩm.",
+            });
+        }
     };
 
     const handleDetailModalClose = () => {
@@ -456,6 +484,21 @@ const OrderManagement: React.FC = () => {
                         <Table
                             dataSource={selectedOrder.orderDetails}
                             columns={[
+                                {
+                                    title: "Hình ảnh",
+                                    dataIndex: "imageUrl", // Đảm bảo rằng dữ liệu có trường này
+                                    key: "imageUrl",
+                                    render: (imageUrl: string | null) =>
+                                        imageUrl ? (
+                                            <img
+                                                src={imageUrl}
+                                                alt="Product"
+                                                style={{ width: "50px", height: "50px", objectFit: "cover", borderRadius: "4px", border: "1px solid black" }}
+                                            />
+                                        ) : (
+                                            "N/A"
+                                        ),
+                                },
                                 {
                                     title: "Tên sản phẩm",
                                     dataIndex: "productName",
