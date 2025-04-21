@@ -124,10 +124,7 @@ const AppRoutes: React.FC = () => {
           path="/"
           element={
             <MainLayout>
-              <ProtectedRouter
-                element={<Home />}
-                allowedRoles={["User"]}
-              />
+              <Home />
             </MainLayout>
           }
         />
